@@ -1,28 +1,31 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Swiper, Tag, Tabs } from 'antd-mobile';
-import { EnvironmentOutline, PhoneFill, LikeOutline } from 'antd-mobile-icons';
-import { fetchHotelDetail, fetchHotelRooms, clearCurrentHotel } from '../../store/slices/hotelSlice';
+import { Swiper, Tag, Button, SpinLoading, Toast, Popup } from 'antd-mobile';
+import { EnvironmentOutline, PhoneFill, HeartOutline, SendOutline, CalendarOutline } from 'antd-mobile-icons';
+import { fetchHotelDetail, fetchHotelRooms, clearCurrentHotel, setSearchParams } from '../../store/slices/hotelSlice';
+import DateRangePicker from '../../components/DateRangePicker';
 import './HotelDetail.css';
 
 const HotelDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { currentHotel, rooms, loading } = useSelector((state) => state.hotel);
+  const { currentHotel, rooms, loading, searchParams } = useSelector((state) => state.hotel);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     dispatch(fetchHotelDetail(id));
-    dispatch(fetchHotelRooms({ id }));
+    dispatch(fetchHotelRooms({ id, checkin: searchParams.checkin, checkout: searchParams.checkout }));
     return () => {
       dispatch(clearCurrentHotel());
     };
-  }, [dispatch, id]);
+  }, [dispatch, id, searchParams.checkin, searchParams.checkout]);
 
-  if (loading || !currentHotel) {
-    return <div className="loading">加载中...</div>;
-  }
+  const sortedRooms = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+    return [...rooms].sort((a, b) => a.base_price - b.base_price);
+  }, [rooms]);
 
   const facilityIcons = {
     '免费WiFi': '📶',
@@ -33,43 +36,116 @@ const HotelDetailPage = () => {
     '停车场': '🚗',
     '会议室': '💼',
     '洗衣服务': '👔',
+    '接机服务': '✈️',
+    '酒吧': '🍸',
+    '儿童乐园': '🎡',
+    '商务中心': '📊',
   };
+
+  const handleDateConfirm = (checkin, checkout, nights) => {
+    dispatch(setSearchParams({ checkin, checkout, nights }));
+    setShowDatePicker(false);
+  };
+
+  const formatDateDisplay = () => {
+    if (!searchParams.checkin) return '选择日期';
+    const checkin = new Date(searchParams.checkin);
+    const month = checkin.getMonth() + 1;
+    const day = checkin.getDate();
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    if (!searchParams.checkout) return `${month}月${day}日 ${weekDays[checkin.getDay()]}`;
+    const checkout = new Date(searchParams.checkout);
+    const outMonth = checkout.getMonth() + 1;
+    const outDay = checkout.getDate();
+    return `${month}/${day}-${outMonth}/${outDay} · ${searchParams.nights}晚`;
+  };
+
+  if (loading || !currentHotel) {
+    return (
+      <div className="detail-loading">
+        <SpinLoading color="primary" />
+        <span>加载中...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="hotel-detail-page">
       <div className="detail-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
+        <button className="header-btn back-btn" onClick={() => navigate(-1)}>
           ←
         </button>
+        <div className="header-actions">
+          <button className="header-btn">
+            <SendOutline />
+          </button>
+          <button className="header-btn">
+            <HeartOutline />
+          </button>
+        </div>
       </div>
 
       <Swiper className="gallery-swiper" loop>
-        {currentHotel.images.map((img) => (
+        {currentHotel.images.map((img, index) => (
           <Swiper.Item key={img.id}>
-            <img src={img.url} alt={currentHotel.name_cn} className="gallery-image" />
+            <img src={img.url} alt={`${currentHotel.name_cn} ${index + 1}`} className="gallery-image" />
           </Swiper.Item>
         ))}
       </Swiper>
 
+      <div className="gallery-indicator">
+        {currentHotel.images.length} 张图片
+      </div>
+
+      <div className="date-banner" onClick={() => setShowDatePicker(true)}>
+        <div className="date-banner-left">
+          <CalendarOutline className="date-banner-icon" />
+          <div className="date-banner-info">
+            <span className="date-banner-label">入住 · 离店</span>
+            <span className="date-banner-value">{formatDateDisplay()}</span>
+          </div>
+        </div>
+        <span className="date-banner-action">修改</span>
+      </div>
+
+      <Popup
+        visible={showDatePicker}
+        onMaskClick={() => setShowDatePicker(false)}
+        position="bottom"
+        bodyStyle={{ height: '70vh', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+      >
+        <div className="popup-header">
+          <span>选择入住日期</span>
+          <span className="popup-close" onClick={() => setShowDatePicker(false)}>关闭</span>
+        </div>
+        <DateRangePicker
+          checkin={searchParams.checkin}
+          checkout={searchParams.checkout}
+          onConfirm={handleDateConfirm}
+          visible={showDatePicker}
+          onClose={() => setShowDatePicker(false)}
+        />
+      </Popup>
+
       <div className="hotel-info-section">
         <div className="hotel-title-row">
           <h1>{currentHotel.name_cn}</h1>
-          <div className="hotel-stars">
+          <div className="hotel-stars-badge">
             {'★'.repeat(currentHotel.star_rating)}
           </div>
         </div>
         <p className="hotel-name-en">{currentHotel.name_en}</p>
-        
+
         <div className="hotel-location">
-          <EnvironmentOutline />
+          <EnvironmentOutline className="location-icon" />
           <span>{currentHotel.address}</span>
         </div>
 
         {currentHotel.promotions && currentHotel.promotions.length > 0 && (
           <div className="promotions">
             {currentHotel.promotions.map((promo) => (
-              <Tag key={promo.id} color="danger" round>
-                {promo.description}
+              <Tag key={promo.id} color="danger" round className="promo-tag">
+                🔥 {promo.description}
               </Tag>
             ))}
           </div>
@@ -78,65 +154,97 @@ const HotelDetailPage = () => {
         <p className="hotel-description">{currentHotel.description}</p>
       </div>
 
-      <div className="section facilities-section">
-        <h2>酒店设施</h2>
-        <div className="facilities-grid">
-          {currentHotel.facilities.map((facility) => (
-            <div key={facility.id} className="facility-item">
-              <span className="facility-icon">
-                {facilityIcons[facility.facility_type] || '✓'}
-              </span>
-              <span className="facility-name">{facility.facility_type}</span>
+      <div className="section info-grid-section">
+        <div className="info-grid">
+          <div className="info-grid-left">
+            <div className="info-grid-title">
+              <h2>酒店设施</h2>
+              <span className="section-count">{currentHotel.facilities.length}项</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="section attractions-section">
-        <h2>周边景点</h2>
-        <div className="attractions-list">
-          {currentHotel.attractions.map((attraction) => (
-            <div key={attraction.id} className="attraction-item">
-              <LikeOutline className="attraction-icon" />
-              <div className="attraction-info">
-                <span className="attraction-name">{attraction.name}</span>
-                <span className="attraction-distance">{attraction.distance}</span>
-              </div>
+            <div className="facilities-compact">
+              {currentHotel.facilities.slice(0, 6).map((facility) => (
+                <div key={facility.id} className="facility-compact-item">
+                  <span className="facility-compact-icon">
+                    {facilityIcons[facility.facility_type] || '✓'}
+                  </span>
+                  <span>{facility.facility_type}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <div className="info-grid-divider" />
+          <div className="info-grid-right">
+            <div className="info-grid-title">
+              <h2>周边景点</h2>
+            </div>
+            <div className="attractions-compact">
+              {currentHotel.attractions.map((attraction) => (
+                <div key={attraction.id} className="attraction-compact-item">
+                  <span className="attraction-compact-name">{attraction.name}</span>
+                  <span className="attraction-compact-distance">{attraction.distance}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="section rooms-section">
-        <h2>房型选择</h2>
+        <div className="section-title">
+          <h2>可选房型</h2>
+          <span className="section-count">{sortedRooms.length}款</span>
+        </div>
         <div className="rooms-list">
-          {rooms.map((room) => (
-            <div key={room.id} className="room-item">
-              <div className="room-info">
-                <h3>{room.name}</h3>
-                <p className="room-desc">{room.description}</p>
-                <div className="room-tags">
-                  <Tag>{room.bed_type}</Tag>
-                  <Tag>{room.area}m²</Tag>
-                  <Tag>可住{room.max_guests}人</Tag>
+          {sortedRooms.length === 0 ? (
+            <div className="no-rooms">暂无可预订房型</div>
+          ) : (
+            sortedRooms.map((room) => (
+              <div key={room.id} className="room-item">
+                <div className="room-image">
+                  {room.image ? (
+                    <img src={room.image} alt={room.name} />
+                  ) : (
+                    <div className="room-image-placeholder">
+                      <span>🛏️</span>
+                    </div>
+                  )}
+                </div>
+                <div className="room-info">
+                  <h3>{room.name}</h3>
+                  <p className="room-desc">{room.description}</p>
+                  <div className="room-tags">
+                    <Tag className="room-tag">{room.bed_type}</Tag>
+                    <Tag className="room-tag">{room.area}m²</Tag>
+                    <Tag className="room-tag">可住{room.max_guests}人</Tag>
+                  </div>
+                </div>
+                <div className="room-price-box">
+                  <div className="room-price">
+                    <span className="price-symbol">¥</span>
+                    <span className="price-value">{room.base_price}</span>
+                  </div>
+                  <button className="book-btn" onClick={() => Toast.show({ content: '预订功能开发中' })}>预订</button>
                 </div>
               </div>
-              <div className="room-price">
-                <span className="price">¥{room.base_price}</span>
-                <span className="price-unit">/晚</span>
-                <button className="book-btn">预订</button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
       <div className="bottom-bar">
-        <div className="contact-btn">
-          <PhoneFill />
-          <span>联系酒店</span>
+        <div className="bottom-left">
+          <div className="contact-btn">
+            <PhoneFill />
+            <span>客服</span>
+          </div>
         </div>
-        <button className="reserve-btn">立即预订</button>
+        <Button 
+          color="danger" 
+          className="reserve-btn"
+          onClick={() => Toast.show({ content: '预订功能开发中' })}
+        >
+          立即预订
+        </Button>
       </div>
     </div>
   );

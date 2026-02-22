@@ -75,10 +75,11 @@ const initialState = {
     totalPages: 0,
   },
   searchParams: {
-    city: '',
+    city: '上海',
     keyword: '',
     checkin: '',
     checkout: '',
+    nights: 0,
     star_rating: null,
     min_price: null,
     max_price: null,
@@ -94,12 +95,15 @@ const hotelSlice = createSlice({
     setSearchParams: (state, action) => {
       state.searchParams = { ...state.searchParams, ...action.payload };
     },
-    clearSearchParams: (state) => {
+    resetSearchParams: (state) => {
       state.searchParams = initialState.searchParams;
     },
     clearCurrentHotel: (state) => {
       state.currentHotel = null;
       state.rooms = [];
+    },
+    appendHotels: (state, action) => {
+      state.hotels = [...state.hotels, ...action.payload];
     },
   },
   extraReducers: (builder) => {
@@ -121,6 +125,7 @@ const hotelSlice = createSlice({
       .addCase(searchHotels.fulfilled, (state, action) => {
         state.loading = false;
         state.hotels = action.payload.data;
+        state.pagination.total = action.payload.total;
       })
       .addCase(searchHotels.rejected, (state, action) => {
         state.loading = false;
@@ -131,7 +136,11 @@ const hotelSlice = createSlice({
       })
       .addCase(fetchHotelList.fulfilled, (state, action) => {
         state.loading = false;
-        state.hotels = action.payload.data;
+        if (action.payload.pagination.page === 1) {
+          state.hotels = action.payload.data;
+        } else {
+          state.hotels = [...state.hotels, ...action.payload.data];
+        }
         state.pagination = action.payload.pagination;
       })
       .addCase(fetchHotelList.rejected, (state, action) => {
@@ -166,5 +175,5 @@ const hotelSlice = createSlice({
   },
 });
 
-export const { setSearchParams, clearSearchParams, clearCurrentHotel } = hotelSlice.actions;
+export const { setSearchParams, resetSearchParams, clearCurrentHotel, appendHotels } = hotelSlice.actions;
 export default hotelSlice.reducer;

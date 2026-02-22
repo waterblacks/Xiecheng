@@ -1,0 +1,126 @@
+.date-range-picker {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.date-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.date-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.date-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.date-value.placeholder {
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.date-divider {
+  padding: 0 16px;
+}
+
+.nights-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 4px 8px;
+}
+
+.nights-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #1677ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nights-btn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.nights-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nights-badge {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 36px;
+  text-align: center;
+}
+
+.calendar-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.confirm-btn-wrapper {
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.adm-calendar {
+  --color: #1677ff;
+  --today-color: #fff;
+  --today-background: #1677ff;
+}
+
+.adm-calendar-cell.is-selected {
+  background: #e6f4ff !important;
+}
+
+.adm-calendar-cell.is-range-start {
+  background: #1677ff !important;
+  color: #fff !important;
+  border-radius: 50% 0 0 50%;
+}
+
+.adm-calendar-cell.is-range-end {
+  background: #1677ff !important;
+  color: #fff !important;
+  border-radius: 0 50% 50% 0;
+}
+
+.adm-calendar-cell.is-range-start.is-range-end {
+  border-radius: 50%;
+}
+
+.adm-calendar-cell {
+  border-radius: 0;
+}
