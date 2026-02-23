@@ -49,3 +49,4 @@ dist/
 # PM2 进程管理配置（可选，若用 PM2 部署）
 ecosystem.config.js
 .pm2/
+.idea/
