@@ -1,22 +1,73 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 
-dotenv.config();
+const authRoutes = require('./routes/auth');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 
-// 中间件配置
-app.use(cors()); // 允许前端跨域访问
-app.use(express.json()); // 让服务器能看懂前端发来的 JSON 数据
+app.use(cors());
+app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+app.use('/api/auth', authRoutes);
+/* =========================
+   管理员首页统计
+========================= */
+app.get('/api/admin/stats/overview', authMiddleware, (req, res) => {
+    // 真实项目要校验角色
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            message: '无权限'
+        });
+    }
 
-// 测试路由
-app.get('/', (req, res) => {
-  res.send('易宿酒店后端接口已成功启动！🚀');
+    res.json({
+        success: true,
+        data: {
+            total_hotels: 50,
+            pending_hotels: 5,
+            approved_hotels: 40,
+            offline_hotels: 3,
+            total_merchants: 20
+        }
+    });
 });
 
-app.listen(PORT, () => {
-  console.log(`服务器启动成功，地址: http://localhost:${PORT}`);
+/* =========================
+   商户首页：我的酒店
+========================= */
+app.get('/api/merchant/hotels', authMiddleware, (req, res) => {
+    if (req.user.role !== 'merchant') {
+        return res.status(403).json({
+            success: false,
+            message: '无权限'
+        });
+    }
+
+    res.json({
+        success: true,
+        data: [
+            {
+                id: 1,
+                name_cn: '测试酒店A',
+                status: 'approved',
+                room_count: 3,
+                min_price: 500,
+                created_at: '2026-01-29'
+            },
+            {
+                id: 2,
+                name_cn: '测试酒店B',
+                status: 'pending',
+                room_count: 5,
+                min_price: 699,
+                created_at: '2026-02-01'
+            }
+        ]
+    });
+});
+
+app.listen(3000, () => {
+    console.log('server running at http://localhost:3000');
 });
