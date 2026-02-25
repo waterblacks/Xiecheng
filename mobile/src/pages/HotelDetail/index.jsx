@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Swiper, Tag, Button, SpinLoading, Toast, Popup } from 'antd-mobile';
+import { Swiper, Tag, Button, SpinLoading, Toast } from 'antd-mobile';
 import { EnvironmentOutline, PhoneFill, HeartOutline, SendOutline, CalendarOutline } from 'antd-mobile-icons';
 import { fetchHotelDetail, fetchHotelRooms, clearCurrentHotel, setSearchParams } from '../../store/slices/hotelSlice';
-import DateRangePicker from '../../components/DateRangePicker';
+import DatePickerPopup from '../../components/DatePickerPopup';
 import './HotelDetail.css';
 
 const HotelDetailPage = () => {
@@ -161,11 +161,6 @@ const HotelDetailPage = () => {
         })}
       </Swiper>
 
-
-      <div className="gallery-indicator">
-        {currentHotel.images.length} 张图片
-      </div>
-
       <div className="date-banner" onClick={() => setShowDatePicker(true)}>
         <div className="date-banner-left">
           <CalendarOutline className="date-banner-icon" />
@@ -177,24 +172,13 @@ const HotelDetailPage = () => {
         <span className="date-banner-action">修改</span>
       </div>
 
-      <Popup
+      <DatePickerPopup
         visible={showDatePicker}
-        onMaskClick={() => setShowDatePicker(false)}
-        position="bottom"
-        bodyStyle={{ height: '70vh', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>选择入住日期</span>
-          <span className="popup-close" onClick={() => setShowDatePicker(false)}>关闭</span>
-        </div>
-        <DateRangePicker
-          checkin={searchParams.checkin}
-          checkout={searchParams.checkout}
-          onConfirm={handleDateConfirm}
-          visible={showDatePicker}
-          onClose={() => setShowDatePicker(false)}
-        />
-      </Popup>
+        onClose={() => setShowDatePicker(false)}
+        checkin={searchParams.checkin}
+        checkout={searchParams.checkout}
+        onConfirm={handleDateConfirm}
+      />
 
       <div className="hotel-info-section">
         <div className="hotel-title-row">
@@ -213,7 +197,7 @@ const HotelDetailPage = () => {
         {currentHotel.promotions && currentHotel.promotions.length > 0 && (
           <div className="promotions">
             {currentHotel.promotions.map((promo) => (
-              <Tag key={promo.id} color="danger" round className="promo-tag">
+              <Tag key={promo.id} color="warning" round className="promo-tag">
                 🔥 {promo.description}
               </Tag>
             ))}
@@ -308,7 +292,7 @@ const HotelDetailPage = () => {
           </div>
         </div>
         <Button 
-          color="danger" 
+          color="primary" 
           className="reserve-btn"
           onClick={() => Toast.show({ content: '预订功能开发中' })}
         >

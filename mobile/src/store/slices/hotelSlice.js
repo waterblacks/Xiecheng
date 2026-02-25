@@ -25,18 +25,6 @@ export const searchHotels = createAsyncThunk(
   }
 );
 
-export const fetchHotelList = createAsyncThunk(
-  'hotel/fetchList',
-  async (params, { rejectWithValue }) => {
-    try {
-      const response = await api.get('/hotels/list', { params });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
 export const fetchHotelDetail = createAsyncThunk(
   'hotel/fetchDetail',
   async (id, { rejectWithValue }) => {
@@ -69,14 +57,9 @@ const initialState = {
   hotels: [],
   currentHotel: null,
   rooms: [],
-  pagination: {
-    page: 1,
-    pageSize: 10,
-    total: 0,
-    totalPages: 0,
-  },
   searchParams: {
-    city: '上海',
+    city: '全国',
+    cities: ['全国'],
     keyword: '',
     checkin: '',
     checkout: '',
@@ -96,15 +79,9 @@ const hotelSlice = createSlice({
     setSearchParams: (state, action) => {
       state.searchParams = { ...state.searchParams, ...action.payload };
     },
-    resetSearchParams: (state) => {
-      state.searchParams = initialState.searchParams;
-    },
     clearCurrentHotel: (state) => {
       state.currentHotel = null;
       state.rooms = [];
-    },
-    appendHotels: (state, action) => {
-      state.hotels = [...state.hotels, ...action.payload];
     },
   },
   extraReducers: (builder) => {
@@ -126,25 +103,8 @@ const hotelSlice = createSlice({
       .addCase(searchHotels.fulfilled, (state, action) => {
         state.loading = false;
         state.hotels = action.payload.data;
-        state.pagination.total = action.payload.total;
       })
       .addCase(searchHotels.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      .addCase(fetchHotelList.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchHotelList.fulfilled, (state, action) => {
-        state.loading = false;
-        if (action.payload.pagination.page === 1) {
-          state.hotels = action.payload.data;
-        } else {
-          state.hotels = [...state.hotels, ...action.payload.data];
-        }
-        state.pagination = action.payload.pagination;
-      })
-      .addCase(fetchHotelList.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -177,5 +137,5 @@ const hotelSlice = createSlice({
   },
 });
 
-export const { setSearchParams, resetSearchParams, clearCurrentHotel, appendHotels } = hotelSlice.actions;
+export const { setSearchParams, clearCurrentHotel } = hotelSlice.actions;
 export default hotelSlice.reducer;

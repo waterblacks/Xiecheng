@@ -4,7 +4,6 @@ import store from './store';
 import HomePage from './pages/Home';
 import HotelListPage from './pages/HotelList';
 import HotelDetailPage from './pages/HotelDetail';
-import './App.css';
 
 function App() {
   return (

@@ -1,11 +1,21 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Popup, Selector, PullToRefresh, SpinLoading, Empty } from 'antd-mobile';
+import { PullToRefresh, SpinLoading, Empty, InfiniteScroll } from 'antd-mobile';
 import { EnvironmentOutline, CalendarOutline, DownOutline } from 'antd-mobile-icons';
 import { searchHotels, setSearchParams } from '../../store/slices/hotelSlice';
-import DateRangePicker from '../../components/DateRangePicker';
+import CitySelectorPopup from '../../components/CitySelectorPopup';
+import DatePickerPopup from '../../components/DatePickerPopup';
+import OptionSelectorPopup from '../../components/OptionSelectorPopup';
+import {
+  CITY_OPTIONS,
+  normalizeCities,
+  getCityDisplay,
+  resolveCitySelectorChange,
+} from '../../components/CitySelectorPopup/cityFilter';
 import './HotelList.css';
+
+const PAGE_SIZE = 10;
 
 const starOptions = [
   { label: '不限', value: null },
@@ -37,9 +47,13 @@ const HotelListPage = () => {
   const { hotels, loading, searchParams } = useSelector((state) => state.hotel);
   
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
   const [showStarPicker, setShowStarPicker] = useState(false);
   const [showPricePicker, setShowPricePicker] = useState(false);
   const [showSortPicker, setShowSortPicker] = useState(false);
+  const [selectedCities, setSelectedCities] = useState(
+    normalizeCities(searchParams.cities || [searchParams.city])
+  );
   
   const [selectedStar, setSelectedStar] = useState(searchParams.star_rating);
   const [selectedPrice, setSelectedPrice] = useState(
@@ -48,19 +62,31 @@ const HotelListPage = () => {
       : 'null-null'
   );
   const [selectedSort, setSelectedSort] = useState('default');
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     doSearch();
   }, [dispatch]);
 
+  useEffect(() => {
+    if (showCityPicker) {
+      setSelectedCities(normalizeCities(searchParams.cities || [searchParams.city]));
+    }
+  }, [showCityPicker, searchParams.city, searchParams.cities]);
+
   const doSearch = useCallback((overrides = {}) => {
     const priceToUse = overrides.price || selectedPrice;
     const starToUse = overrides.star !== undefined ? overrides.star : selectedStar;
     const sortToUse = overrides.sort || selectedSort;
+    const citiesToUse = normalizeCities(
+      overrides.cities || searchParams.cities || [searchParams.city]
+    );
+    const specificCities = citiesToUse.filter((city) => city !== '全国');
     
     const [minPrice, maxPrice] = priceToUse.split('-');
     const params = {
       keyword: searchParams.keyword,
+      city: specificCities.length === 1 ? specificCities[0] : undefined,
       star_rating: starToUse,
       min_price: minPrice === 'null' ? null : parseInt(minPrice),
       max_price: maxPrice === 'null' ? null : parseInt(maxPrice),
@@ -78,7 +104,7 @@ const HotelListPage = () => {
     }
     
     dispatch(searchHotels(params));
-  }, [dispatch, searchParams.keyword, selectedStar, selectedPrice, selectedSort]);
+  }, [dispatch, searchParams.keyword, searchParams.city, searchParams.cities, selectedStar, selectedPrice, selectedSort]);
 
   const handleRefresh = async () => {
     doSearch();
@@ -87,6 +113,17 @@ const HotelListPage = () => {
   const handleDateConfirm = (checkin, checkout, nights) => {
     dispatch(setSearchParams({ checkin, checkout, nights }));
     setShowDatePicker(false);
+  };
+
+  const handleCityConfirm = (arr) => {
+    const cities = normalizeCities(arr);
+    dispatch(setSearchParams({ city: getCityDisplay(cities), cities }));
+    setShowCityPicker(false);
+    doSearch({ cities });
+  };
+
+  const handleCitySelectorChange = (values) => {
+    setSelectedCities((prev) => resolveCitySelectorChange(prev, values));
   };
 
   const handleStarSelect = (arr) => {
@@ -152,19 +189,78 @@ const HotelListPage = () => {
     navigate(`/hotel/${id}`);
   };
 
-  const { matchedHotels, recommendedHotels } = useMemo(() => {
-    const matched = hotels.filter(h => h.is_matched !== false);
-    const recommended = hotels.filter(h => h.is_matched === false);
-    return { matchedHotels: matched, recommendedHotels: recommended };
-  }, [hotels]);
+  const visibleHotels = useMemo(() => {
+    const [minPrice, maxPrice] = selectedPrice.split('-');
+    const min = minPrice === 'null' ? null : parseInt(minPrice);
+    const max = maxPrice === 'null' ? null : parseInt(maxPrice);
+    let result = [...hotels];
+
+    // 前端兜底：即使后端没处理这些参数，也保证筛选和排序在页面生效
+    const cities = normalizeCities(searchParams.cities || [searchParams.city]);
+    const specificCities = cities.filter((city) => city !== '全国');
+    if (specificCities.length > 0) {
+      result = result.filter((h) => specificCities.some((city) => h.address?.includes(city)));
+    }
+    if (selectedStar !== null) {
+      result = result.filter((h) => h.star_rating === selectedStar);
+    }
+    if (min !== null) {
+      result = result.filter((h) => h.min_price >= min);
+    }
+    if (max !== null) {
+      result = result.filter((h) => h.min_price <= max);
+    }
+
+    if (selectedSort === 'price_asc') {
+      result.sort((a, b) => a.min_price - b.min_price);
+    } else if (selectedSort === 'price_desc') {
+      result.sort((a, b) => b.min_price - a.min_price);
+    } else if (selectedSort === 'star') {
+      result.sort((a, b) => b.star_rating - a.star_rating);
+    }
+
+    return result;
+  }, [hotels, searchParams.city, searchParams.cities, selectedStar, selectedPrice, selectedSort]);
+
+  useEffect(() => {
+    setDisplayCount(PAGE_SIZE);
+  }, [visibleHotels]);
+
+  const {
+    matchedHotels,
+    recommendedHotels,
+    displayedHotels,
+    displayedMatchedHotels,
+    displayedRecommendedHotels,
+    hasMore,
+  } = useMemo(() => {
+    const matched = visibleHotels.filter((h) => h.is_matched !== false);
+    const recommended = visibleHotels.filter((h) => h.is_matched === false);
+    const displayed = visibleHotels.slice(0, displayCount);
+    return {
+      matchedHotels: matched,
+      recommendedHotels: recommended,
+      displayedHotels: displayed,
+      displayedMatchedHotels: displayed.filter((h) => h.is_matched !== false),
+      displayedRecommendedHotels: displayed.filter((h) => h.is_matched === false),
+      hasMore: displayCount < visibleHotels.length,
+    };
+  }, [visibleHotels, displayCount]);
+
+  const loadMore = async () => {
+    if (!hasMore) return;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    setDisplayCount((prev) => Math.min(prev + PAGE_SIZE, visibleHotels.length));
+  };
 
   return (
     <div className="hotel-list-page">
       <div className="list-header">
         <div className="header-top">
-          <div className="header-city" onClick={() => navigate('/')}>
+          <div className="header-city" onClick={() => setShowCityPicker(true)}>
             <EnvironmentOutline />
-            <span>{searchParams.city}</span>
+            <span>{getCityDisplay(searchParams.cities || [searchParams.city])}</span>
+            <DownOutline className="city-arrow" />
           </div>
           {searchParams.keyword && (
             <div className="header-keyword">
@@ -205,98 +301,61 @@ const HotelListPage = () => {
         </div>
       </div>
 
-      <Popup
+      <CitySelectorPopup
+        visible={showCityPicker}
+        onClose={() => setShowCityPicker(false)}
+        onConfirm={handleCityConfirm}
+        value={selectedCities}
+        onChange={handleCitySelectorChange}
+        options={CITY_OPTIONS}
+      />
+
+      <DatePickerPopup
         visible={showDatePicker}
-        onMaskClick={() => setShowDatePicker(false)}
-        position="bottom"
-        bodyStyle={{ height: '70vh', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>选择入住日期</span>
-          <span className="popup-close" onClick={() => setShowDatePicker(false)}>关闭</span>
-        </div>
-        <DateRangePicker
-          checkin={searchParams.checkin}
-          checkout={searchParams.checkout}
-          onConfirm={handleDateConfirm}
-          visible={showDatePicker}
-          onClose={() => setShowDatePicker(false)}
-        />
-      </Popup>
+        onClose={() => setShowDatePicker(false)}
+        checkin={searchParams.checkin}
+        checkout={searchParams.checkout}
+        onConfirm={handleDateConfirm}
+      />
 
-      <Popup
+      <OptionSelectorPopup
         visible={showStarPicker}
-        onMaskClick={() => setShowStarPicker(false)}
-        position="bottom"
-        bodyStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>酒店星级</span>
-          <span className="popup-close" onClick={() => setShowStarPicker(false)}>取消</span>
-        </div>
-        <div className="quick-picker-content">
-          <Selector
-            columns={3}
-            options={starOptions}
-            value={[selectedStar]}
-            onChange={handleStarSelect}
-            style={{ '--gap': '12px' }}
-          />
-        </div>
-      </Popup>
+        onClose={() => setShowStarPicker(false)}
+        title="酒店星级"
+        options={starOptions}
+        value={[selectedStar]}
+        onChange={handleStarSelect}
+      />
 
-      <Popup
+      <OptionSelectorPopup
         visible={showPricePicker}
-        onMaskClick={() => setShowPricePicker(false)}
-        position="bottom"
-        bodyStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>价格区间</span>
-          <span className="popup-close" onClick={() => setShowPricePicker(false)}>取消</span>
-        </div>
-        <div className="quick-picker-content">
-          <Selector
-            columns={3}
-            options={priceOptions}
-            value={[selectedPrice]}
-            onChange={handlePriceSelect}
-            style={{ '--gap': '12px' }}
-          />
-        </div>
-      </Popup>
+        onClose={() => setShowPricePicker(false)}
+        title="价格区间"
+        options={priceOptions}
+        value={[selectedPrice]}
+        onChange={handlePriceSelect}
+      />
 
-      <Popup
+      <OptionSelectorPopup
         visible={showSortPicker}
-        onMaskClick={() => setShowSortPicker(false)}
-        position="bottom"
-        bodyStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>排序方式</span>
-          <span className="popup-close" onClick={() => setShowSortPicker(false)}>取消</span>
-        </div>
-        <div className="quick-picker-content">
-          <Selector
-            columns={2}
-            options={sortOptions}
-            value={[selectedSort]}
-            onChange={handleSortSelect}
-            style={{ '--gap': '12px' }}
-          />
-        </div>
-      </Popup>
+        onClose={() => setShowSortPicker(false)}
+        title="排序方式"
+        options={sortOptions}
+        value={[selectedSort]}
+        onChange={handleSortSelect}
+        columns={2}
+      />
 
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="hotel-list">
-          {hotels.length === 0 && !loading && (
+          {visibleHotels.length === 0 && !loading && (
             <Empty description="暂无符合条件的酒店" />
           )}
           
           {matchedHotels.length > 0 && searchParams.keyword && (
             <div className="hotel-section">
               <div className="hotel-section-title">搜索结果 ({matchedHotels.length})</div>
-              {matchedHotels.map((hotel) => (
+              {displayedMatchedHotels.map((hotel) => (
                 <HotelCard key={hotel.id} hotel={hotel} onClick={handleHotelClick} />
               ))}
             </div>
@@ -305,15 +364,19 @@ const HotelListPage = () => {
           {recommendedHotels.length > 0 && (
             <div className="hotel-section">
               <div className="hotel-section-title">为您推荐</div>
-              {recommendedHotels.map((hotel) => (
+              {displayedRecommendedHotels.map((hotel) => (
                 <HotelCard key={hotel.id} hotel={hotel} onClick={handleHotelClick} isRecommended />
               ))}
             </div>
           )}
           
-          {!searchParams.keyword && hotels.map((hotel) => (
+          {!searchParams.keyword && displayedHotels.map((hotel) => (
             <HotelCard key={hotel.id} hotel={hotel} onClick={handleHotelClick} />
           ))}
+
+          {visibleHotels.length > 0 && (
+            <InfiniteScroll loadMore={loadMore} hasMore={hasMore} />
+          )}
         </div>
         
         {loading && (

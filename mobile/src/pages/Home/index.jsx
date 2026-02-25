@@ -1,25 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Swiper, Tag, Grid, Popup, Picker, Button, SearchBar, Toast } from 'antd-mobile';
+import { Swiper, Tag, Grid, Popup, Button, SearchBar } from 'antd-mobile';
 import { EnvironmentOutline, CalendarOutline, DownOutline, FilterOutline } from 'antd-mobile-icons';
 import { fetchFeaturedHotels, setSearchParams } from '../../store/slices/hotelSlice';
 import mockData from '../../../../server/mocks';
-import DateRangePicker from '../../components/DateRangePicker';
+import CitySelectorPopup from '../../components/CitySelectorPopup';
+import DatePickerPopup from '../../components/DatePickerPopup';
+import {
+  CITY_OPTIONS,
+  normalizeCities,
+  getCityDisplay,
+  resolveCitySelectorChange,
+} from '../../components/CitySelectorPopup/cityFilter';
 import './Home.css';
 
 const { categories } = mockData;
-
-const cityOptions = [
-  { label: '上海', value: '上海' },
-  { label: '北京', value: '北京' },
-  { label: '杭州', value: '杭州' },
-  { label: '广州', value: '广州' },
-  { label: '深圳', value: '深圳' },
-  { label: '成都', value: '成都' },
-  { label: '三亚', value: '三亚' },
-  { label: '西安', value: '西安' },
-];
 
 const starOptions = [
   { label: '不限', value: null },
@@ -46,6 +42,9 @@ const HomePage = () => {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showDatePopup, setShowDatePopup] = useState(false);
   const [showFilterPopup, setShowFilterPopup] = useState(false);
+  const [selectedCities, setSelectedCities] = useState(
+    normalizeCities(searchParams.cities || [searchParams.city])
+  );
   
   const [keyword, setKeyword] = useState('');
   const [selectedStar, setSelectedStar] = useState(null);
@@ -55,30 +54,25 @@ const HomePage = () => {
     dispatch(fetchFeaturedHotels());
   }, [dispatch]);
 
-  const handleCityConfirm = (value) => {
-    dispatch(setSearchParams({ city: value[0] }));
+  useEffect(() => {
+    if (showCityPicker) {
+      setSelectedCities(normalizeCities(searchParams.cities || [searchParams.city]));
+    }
+  }, [showCityPicker, searchParams.city, searchParams.cities]);
+
+  const handleCityConfirm = (values) => {
+    const cities = normalizeCities(values);
+    dispatch(setSearchParams({ city: getCityDisplay(cities), cities }));
     setShowCityPicker(false);
+  };
+
+  const handleCitySelectorChange = (values) => {
+    setSelectedCities((prev) => resolveCitySelectorChange(prev, values));
   };
 
   const handleDateConfirm = (checkin, checkout, nights) => {
     dispatch(setSearchParams({ checkin, checkout, nights }));
     setShowDatePopup(false);
-  };
-
-  const handleQuickTag = (tag) => {
-    if (tag.star !== undefined) {
-      setSelectedStar(tag.star);
-      dispatch(setSearchParams({ star_rating: tag.star }));
-    }
-    if (tag.price) {
-      setSelectedPrice(tag.price);
-      const [min, max] = tag.price.split('-');
-      dispatch(setSearchParams({ 
-        min_price: min === 'null' ? null : parseInt(min), 
-        max_price: max === 'null' ? null : parseInt(max) 
-      }));
-    }
-    Toast.show({ content: `已选择: ${tag.label}`, duration: 1000 });
   };
 
   const handleSearch = () => {
@@ -113,20 +107,13 @@ const HomePage = () => {
     return `${month}/${day} - ${outMonth}/${outDay} · ${searchParams.nights}晚`;
   };
 
-  const quickTags = [
-    { label: '五星豪华', star: 5 },
-    { label: '高性价比', price: '0-500' },
-    { label: '商务优选', star: 4 },
-    { label: '亲子酒店', price: '500-1000' },
-  ];
-
   return (
     <div className="home-page">
       <div className="home-header">
         <div className="header-content">
           <div className="location-btn" onClick={() => setShowCityPicker(true)}>
             <EnvironmentOutline className="location-icon" />
-            <span className="location-text">{searchParams.city}</span>
+            <span className="location-text">{getCityDisplay(searchParams.cities || [searchParams.city])}</span>
             <DownOutline className="arrow-icon" />
           </div>
         </div>
@@ -147,10 +134,10 @@ const HomePage = () => {
 
         <div className="search-keyword">
           <SearchBar
-            placeholder="搜索酒店名称、地址、地标"
+            placeholder="搜索酒店名称、地址"
             value={keyword}
             onChange={setKeyword}
-            style={{ '--background': '#f5f5f5' }}
+            style={{ '--background': 'var(--color-bg-page)', '--font-size': '16px' }}
           />
         </div>
 
@@ -166,18 +153,6 @@ const HomePage = () => {
             )}
           </div>
           
-          <div className="quick-tags">
-            {quickTags.map((tag, idx) => (
-              <Tag
-                key={idx}
-                round
-                className="quick-tag"
-                onClick={() => handleQuickTag(tag)}
-              >
-                {tag.label}
-              </Tag>
-            ))}
-          </div>
         </div>
 
         <Button 
@@ -191,41 +166,22 @@ const HomePage = () => {
         </Button>
       </div>
 
-      <Popup
+      <CitySelectorPopup
         visible={showCityPicker}
-        onMaskClick={() => setShowCityPicker(false)}
-        position="bottom"
-        bodyStyle={{ height: '40vh', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>选择城市</span>
-          <span className="popup-close" onClick={() => setShowCityPicker(false)}>完成</span>
-        </div>
-        <Picker
-          columns={[cityOptions]}
-          onConfirm={handleCityConfirm}
-          defaultValue={[searchParams.city]}
-        />
-      </Popup>
+        onClose={() => setShowCityPicker(false)}
+        onConfirm={handleCityConfirm}
+        value={selectedCities}
+        onChange={handleCitySelectorChange}
+        options={CITY_OPTIONS}
+      />
 
-      <Popup
+      <DatePickerPopup
         visible={showDatePopup}
-        onMaskClick={() => setShowDatePopup(false)}
-        position="bottom"
-        bodyStyle={{ height: '70vh', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-      >
-        <div className="popup-header">
-          <span>选择入住日期</span>
-          <span className="popup-close" onClick={() => setShowDatePopup(false)}>关闭</span>
-        </div>
-        <DateRangePicker
-          checkin={searchParams.checkin}
-          checkout={searchParams.checkout}
-          onConfirm={handleDateConfirm}
-          visible={showDatePopup}
-          onClose={() => setShowDatePopup(false)}
-        />
-      </Popup>
+        onClose={() => setShowDatePopup(false)}
+        checkin={searchParams.checkin}
+        checkout={searchParams.checkout}
+        onConfirm={handleDateConfirm}
+      />
 
       <Popup
         visible={showFilterPopup}

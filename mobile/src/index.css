@@ -1,10 +1,32 @@
 :root {
+  --color-primary: #1677ff;
+  --color-primary-2: #4096ff;
+  --color-primary-3: #69b1ff;
+  --color-primary-soft-bg: #eaf3ff;
+
+  --color-text-primary: #2f3440;
+  --color-text-secondary: #626b7f;
+  --color-text-tertiary: #9099ab;
+  --color-text-quaternary: #b9c0cd;
+
+  --color-bg-card: #ffffff;
+  --color-bg-page: #f5f6f8;
+  --color-bg-muted: #f8f9fb;
+
+  --color-border: #e7ebf0;
+  --color-border-strong: #d8dee8;
+
+  --color-price: #e06a62;
+  --color-price-soft: #f09a92;
+  --color-star: #e0ac45;
+  --color-star-bg: #fff7e6;
+
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
-  color: #333;
-  background-color: #f5f5f5;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-page);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -25,7 +47,7 @@ html, body, #root {
 body {
   max-width: 414px;
   margin: 0 auto;
-  background: #f5f5f5;
+  background: var(--color-bg-page);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
@@ -63,7 +85,7 @@ input, textarea {
 }
 
 .adm-tabs-header {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .adm-tag {
@@ -76,6 +98,43 @@ input, textarea {
 
 .adm-selector-check-mark-wrapper {
   display: none;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.popup-close {
+  font-size: 14px;
+  color: var(--color-primary);
+  font-weight: normal;
+}
+
+.popup-reset {
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  font-weight: normal;
+}
+
+.city-picker-content {
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+}
+
+.city-picker-content .adm-selector-item {
+  font-size: 13px;
+}
+
+.quick-picker-content {
+  padding: 20px 16px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
 }
 
 .adm-calendar-header {
