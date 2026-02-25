@@ -1,17 +1,48 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const authRoutes = require('./routes/auth');
-const authMiddleware = require('./middleware/auth');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import authRoutes from './routes/auth.js';
+import hotelRoutes from './routes/hotels.js';
+import categoryRoutes from './routes/categories.js';
+import authMiddleware from './middleware/auth.js';
+import { hotelList } from './mocks/hotels.js';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// 静态文件服务（用于提供 mock 数据文件）
+app.use('/mocks', express.static(path.join(__dirname, '../mobile/src/mocks')));
+
+// API 路由
 app.use('/api/auth', authRoutes);
+app.use('/api/hotels', hotelRoutes);      // 新增酒店路由
+app.use('/api/categories', categoryRoutes); // 新增分类路由
+
 let hotelId = 21;
 let hotels = [];
+// 初始化 mock 数据到内存
+hotelList.forEach(mockHotel => {
+    hotels.push({
+        id: mockHotel.id,
+        merchantId: 2, // 默认商户ID
+        name_cn: mockHotel.name_cn,
+        name_en: mockHotel.name_en,
+        address: mockHotel.address,
+        star_rating: mockHotel.star_rating,
+        min_price: mockHotel.min_price,
+        status: 'approved', // 默认状态为已审核通过
+        created_at: new Date().toISOString().slice(0,10),
+        description: `${mockHotel.name_cn}位于${mockHotel.address.split('市')[0]}核心地段，是一家集商务与休闲于一体的豪华酒店。`
+    });
+});
+
 /* =========================
    管理员首页统计
 ========================= */
@@ -144,6 +175,7 @@ app.post('/api/merchant/hotels/:id/submit', authMiddleware, (req, res) => {
 
     res.json({ success:true,message:'提交审核成功' });
 });
+
 app.listen(3000, () => {
     console.log('server running at http://localhost:3000');
 });

@@ -1,4 +1,4 @@
-export const featuredHotels = [
+const featuredHotels = [
   {
     id: 1,
     name_cn: '上海外滩华尔道夫酒店',
@@ -29,7 +29,7 @@ export const featuredHotels = [
   },
 ];
 
-export const hotelList = [
+const hotelList = [
   {
     id: 1,
     name_cn: '上海外滩华尔道夫酒店',
@@ -246,7 +246,7 @@ const generateHotelDetail = (hotel) => ({
   ] : [],
 });
 
-export const hotelDetail = {};
+const hotelDetail = {};
 hotelList.forEach(hotel => {
   hotelDetail[hotel.id] = generateHotelDetail(hotel);
 });
@@ -310,12 +310,12 @@ const generateRooms = (hotelId, basePrice) => [
   },
 ];
 
-export const hotelRooms = {};
+const hotelRooms = {};
 hotelList.forEach(hotel => {
   hotelRooms[hotel.id] = generateRooms(hotel.id, hotel.min_price);
 });
 
-export const categories = [
+const categories = [
   { id: 1, name: '豪华酒店', icon: 'star' },
   { id: 2, name: '商务出行', icon: 'briefcase' },
   { id: 3, name: '亲子度假', icon: 'heart' },
@@ -325,3 +325,11 @@ export const categories = [
   { id: 7, name: '网红打卡', icon: 'camera' },
   { id: 8, name: '更多', icon: 'appstore' },
 ];
+
+export {
+  featuredHotels,
+  hotelList,
+  hotelDetail,
+  hotelRooms,
+  categories
+};

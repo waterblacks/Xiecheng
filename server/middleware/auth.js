@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 const SECRET = 'xiecheng-secret';
 
-module.exports = function (req, res, next) {
+export default function (req, res, next) {
     const auth = req.headers.authorization;
 
     if (!auth) {

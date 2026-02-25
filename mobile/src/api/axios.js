@@ -1,8 +1,6 @@
 import axios from 'axios';
-import mockData from '../mocks';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 const instance = axios.create({
   baseURL: BASE_URL,
@@ -12,6 +10,7 @@ const instance = axios.create({
   },
 });
 
+// 请求拦截器 - 添加认证 token
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -20,52 +19,18 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
-if (USE_MOCK) {
-  instance.interceptors.request.use(async (config) => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return config;
-  });
-
-  instance.interceptors.response.use(
+// 响应拦截器 - 统一错误处理
+instance.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.config && error.config.url) {
-        const mockResponse = mockData.matchRequest(
-          error.config.method?.toUpperCase() || 'GET',
-          error.config.url,
-          error.config.params,
-          error.config.data
-        );
-        if (mockResponse) {
-          return Promise.resolve({ data: mockResponse, status: 200 });
-        }
+      // 统一错误处理
+      if (error.response?.status === 401) {
+        // token 过期，清除本地存储并跳转登录
+        localStorage.removeItem('token');
+        window.location.href = '/login';
       }
       return Promise.reject(error);
     }
-  );
-
-  instance.interceptors.request.use((config) => {
-    const mockResponse = mockData.matchRequest(
-      config.method?.toUpperCase() || 'GET',
-      config.url,
-      config.params,
-      config.data
-    );
-    if (mockResponse) {
-      return Promise.reject({ __mock__: true, response: mockResponse, config });
-    }
-    return config;
-  });
-
-  instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.__mock__) {
-        return Promise.resolve({ data: error.response, status: 200 });
-      }
-      return Promise.reject(error);
-    }
-  );
-}
+);
 
 export default instance;

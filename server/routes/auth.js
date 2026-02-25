@@ -1,5 +1,6 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
+import express from 'express';
+import jwt from 'jsonwebtoken';
+
 const router = express.Router();
 
 const SECRET = 'xiecheng-secret';
@@ -81,18 +82,22 @@ router.post('/login', (req, res) => {
 /**
  * 获取当前用户
  */
-router.get('/profile', require('../middleware/auth'), (req, res) => {
-    const user = users.find(u => u.id === req.user.id);
-
-    res.json({
-        success: true,
-        data: {
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            created_at: '2026-01-29 10:00:00'
-        }
-    });
+router.get('/profile', (req, res, next) => {
+    import('../middleware/auth.js').then(authMiddleware => {
+        authMiddleware.default(req, res, () => {
+            const user = users.find(u => u.id === req.user.id);
+            
+            res.json({
+                success: true,
+                data: {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role,
+                    created_at: '2026-01-29 10:00:00'
+                }
+            });
+        });
+    }).catch(next);
 });
 
-module.exports = router;
+export default router;

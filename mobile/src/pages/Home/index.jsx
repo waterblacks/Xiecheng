@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Swiper, Tag, Grid, Popup, Picker, Button, SearchBar, Toast } from 'antd-mobile';
 import { EnvironmentOutline, CalendarOutline, DownOutline, FilterOutline } from 'antd-mobile-icons';
 import { fetchFeaturedHotels, setSearchParams } from '../../store/slices/hotelSlice';
-import mockData from '../../mocks';
+import mockData from '../../../../server/mocks';
 import DateRangePicker from '../../components/DateRangePicker';
 import './Home.css';
 
