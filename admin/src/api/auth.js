@@ -21,7 +21,7 @@ export async function register(data) {
 }
 
 export async function getProfile() {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const res = await fetch(`${BASE_URL}/auth/profile`, {
         headers: {

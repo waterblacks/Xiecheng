@@ -84,7 +84,7 @@ function HotelReviewPage() {
 function OnlineOfflineManagementPage() {
     const [publishedList, setPublishedList] = useState([]);
     const [offlineList, setOfflineList] = useState([]);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const loadPublished = async () => {
         const res = await fetch(`${BASE}/admin/hotels?status=approved`, {
@@ -188,7 +188,7 @@ function OnlineOfflineManagementPage() {
 
 function PublishedHotelsPage() {
     const [list, setList] = useState([]);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const load = async () => {
         const res = await fetch(`${BASE}/admin/hotels?status=approved`, {

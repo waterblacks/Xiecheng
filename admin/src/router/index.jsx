@@ -14,13 +14,13 @@ function ForceLoginRedirect() {
 }
 
 function PrivateRoute({ children }) {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) return <Navigate to="/login" />;
     return children;
 }
 
 function IndexRedirect() {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
 
     if (!user) return <Navigate to="/login" />;
 

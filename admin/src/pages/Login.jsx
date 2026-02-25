@@ -16,8 +16,8 @@ export default function Login() {
             return;
         }
 
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('user', JSON.stringify(res.data.user));
+        sessionStorage.setItem('token', res.data.token);
+        sessionStorage.setItem('user', JSON.stringify(res.data.user));
 
         // 根据用户角色跳转到对应页面
         const user = res.data.user;

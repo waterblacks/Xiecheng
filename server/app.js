@@ -185,6 +185,7 @@ app.post('/api/merchant/hotels/:id/submit', authMiddleware, (req, res) => {
 
     res.json({ success:true,message:'提交审核成功' });
 });
+//查询用户的当前酒店
 app.get('/api/merchant/hotels', authMiddleware, (req, res) => {
 
     if (req.user.role !== 'merchant') {
