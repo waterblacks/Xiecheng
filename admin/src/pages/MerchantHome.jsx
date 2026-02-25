@@ -1,45 +1,101 @@
 import { useEffect, useState } from 'react';
-import { getMyHotels } from '../api/merchant';
 
-export default function MerchantHome() {
-    const [list, setList] = useState([]);
+const BASE = 'http://localhost:3000/api';
 
-    useEffect(() => {
-        getMyHotels().then(res => {
-            if (res.success) {
-                setList(res.data);
-            } else {
-                alert(res.message || '获取酒店失败');
-            }
+export default function MerchantHotelEditor() {
+
+    const [hotelId, setHotelId] = useState(null);
+
+    const [form, setForm] = useState({
+        name_cn: '',
+        address: '',
+        star_rating: 3,
+        description: ''
+    });
+
+    const token = localStorage.getItem('token');
+
+    const onChange = e => {
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value
         });
-    }, []);
+    };
+
+    // 保存（新建或更新）
+    const save = async () => {
+
+        const url = hotelId
+            ? `${BASE}/merchant/hotels/${hotelId}`
+            : `${BASE}/merchant/hotels`;
+
+        const method = hotelId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+            body: JSON.stringify(form)
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.data?.id) {
+            setHotelId(data.data.id);
+        }
+
+        alert(data.message || '保存成功');
+    };
+
+    // 提交审核
+    const submit = async () => {
+        if (!hotelId) return alert('请先保存');
+
+        const res = await fetch(
+            `${BASE}/merchant/hotels/${hotelId}/submit`,
+            {
+                method:'POST',
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await res.json();
+        alert(data.message);
+    };
 
     return (
-        <div style={{ padding: 20 }}>
-            <h2>商户首页（我的酒店）</h2>
+        <div style={{ padding:20 }}>
+            <h2>商户酒店信息录入 / 编辑</h2>
 
-            <table border="1" cellPadding="6">
-                <thead>
-                <tr>
-                    <th>酒店名</th>
-                    <th>状态</th>
-                    <th>房间数</th>
-                    <th>最低价</th>
-                    <th>创建时间</th>
-                </tr>
-                </thead>
-                <tbody>
-                {list.map(item => (
-                    <tr key={item.id}>
-                        <td>{item.name_cn}</td>
-                        <td>{item.status}</td>
-                        <td>{item.room_count}</td>
-                        <td>{item.min_price}</td>
-                        <td>{item.created_at}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
+            <div>
+                酒店名称：
+                <input name="name_cn" value={form.name_cn} onChange={onChange}/>
+            </div>
+
+            <div>
+                地址：
+                <input name="address" value={form.address} onChange={onChange}/>
+            </div>
+
+            <div>
+                星级：
+                <input name="star_rating" value={form.star_rating} onChange={onChange}/>
+            </div>
+
+            <div>
+                描述：
+                <textarea name="description" value={form.description} onChange={onChange}/>
+            </div>
+
+            <br/>
+
+            <button onClick={save}>保存</button>
+            <button onClick={submit} style={{ marginLeft:10 }}>提交审核</button>
+
         </div>
     );
 }

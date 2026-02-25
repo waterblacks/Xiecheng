@@ -5,6 +5,14 @@ import Register from '../pages/Register';
 import AdminHome from '../pages/AdminHome';
 import MerchantHome from '../pages/MerchantHome';
 
+// 修改：强制跳转到登录页面的组件
+function ForceLoginRedirect() {
+    // 清除所有认证信息
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to="/login" replace />;
+}
+
 function PrivateRoute({ children }) {
     const token = localStorage.getItem('token');
     if (!token) return <Navigate to="/login" />;
@@ -28,33 +36,30 @@ export default function Router() {
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-
-                {/* 根路径根据角色跳转 */}
-                <Route
-                    path="/"
-                    element={
-                        <PrivateRoute>
-                            <IndexRedirect />
-                        </PrivateRoute>
-                    }
-                />
-
-                <Route
-                    path="/admin"
+                
+                {/* 修改：根路径强制跳转到登录页面 */}
+                <Route path="/" element={<ForceLoginRedirect />} />
+                
+                {/* 修改：其他路径也强制跳转到登录页面 */}
+                <Route path="/admin" element={<ForceLoginRedirect />} />
+                <Route path="/merchant" element={<ForceLoginRedirect />} />
+                
+                {/* 可以添加一个隐藏的管理路径用于测试 */}
+                <Route 
+                    path="/admin-panel" 
                     element={
                         <PrivateRoute>
                             <AdminHome />
                         </PrivateRoute>
-                    }
+                    } 
                 />
-
-                <Route
-                    path="/merchant"
+                <Route 
+                    path="/merchant-panel" 
                     element={
                         <PrivateRoute>
                             <MerchantHome />
                         </PrivateRoute>
-                    }
+                    } 
                 />
             </Routes>
         </BrowserRouter>

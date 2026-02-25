@@ -19,7 +19,15 @@ export default function Login() {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
 
-        nav('/');
+        // 修改：登录成功后跳转到对应的管理面板
+        const user = res.data.user;
+        if (user.role === 'admin') {
+            nav('/admin-panel');
+        } else if (user.role === 'merchant') {
+            nav('/merchant-panel');
+        } else {
+            nav('/login');
+        }
     };
 
     return (
