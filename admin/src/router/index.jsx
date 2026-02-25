@@ -40,11 +40,27 @@ export default function Router() {
                 {/* 修改：根路径强制跳转到登录页面 */}
                 <Route path="/" element={<ForceLoginRedirect />} />
                 
-                {/* 修改：其他路径也强制跳转到登录页面 */}
-                <Route path="/admin" element={<ForceLoginRedirect />} />
-                <Route path="/merchant" element={<ForceLoginRedirect />} />
+                {/* 管理员路由 */}
+                <Route 
+                    path="/admin" 
+                    element={
+                        <PrivateRoute>
+                            <AdminHome />
+                        </PrivateRoute>
+                    } 
+                />
                 
-                {/* 可以添加一个隐藏的管理路径用于测试 */}
+                {/* 商户路由 */}
+                <Route 
+                    path="/merchant" 
+                    element={
+                        <PrivateRoute>
+                            <MerchantHome />
+                        </PrivateRoute>
+                    } 
+                />
+                
+                {/* 保持原有的隐藏管理路径用于测试 */}
                 <Route 
                     path="/admin-panel" 
                     element={

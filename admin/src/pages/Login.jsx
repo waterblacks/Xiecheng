@@ -19,12 +19,12 @@ export default function Login() {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
 
-        // 修改：登录成功后跳转到对应的管理面板
+        // 根据用户角色跳转到对应页面
         const user = res.data.user;
         if (user.role === 'admin') {
-            nav('/admin-panel');
+            nav('/admin'); // 跳转到管理员主页面
         } else if (user.role === 'merchant') {
-            nav('/merchant-panel');
+            nav('/merchant'); // 跳转到商户页面
         } else {
             nav('/login');
         }
@@ -38,6 +38,13 @@ export default function Login() {
                 placeholder="用户名"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
+                style={{
+                    padding: '10px',
+                    margin: '10px 0',
+                    width: '300px',
+                    border: '1px solid #d9d9d9',
+                    borderRadius: '4px'
+                }}
             />
 
             <br/>
@@ -47,18 +54,51 @@ export default function Login() {
                 placeholder="密码"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                style={{
+                    padding: '10px',
+                    margin: '10px 0',
+                    width: '300px',
+                    border: '1px solid #d9d9d9',
+                    borderRadius: '4px'
+                }}
             />
 
             <br/>
 
-            <button onClick={handleLogin}>登录</button>
-
-            <br/>
-            <br/>
-
-            <button onClick={() => nav('/register')} style={{backgroundColor: '#f0f0f0'}}>
-                还没有账号？去注册
+            <button 
+                onClick={handleLogin}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#1890ff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    marginTop: '10px',
+                    marginRight: '10px'
+                }}
+            >
+                登录
             </button>
+            
+            <button 
+                onClick={() => nav('/register')}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#52c41a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    marginTop: '10px'
+                }}
+            >
+                注册新用户
+            </button>
+            
+            <div style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+                <p>提示：注册时可以选择注册为管理员或商户角色</p>
+            </div>
         </div>
     );
 }

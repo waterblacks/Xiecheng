@@ -52,8 +52,15 @@ app.get('/api/admin/hotels', authMiddleware, (req, res) => {
     if (req.user.role !== 'admin') {
         return res.status(403).json({ success:false,message:'无权限' });
     }
+    const { status } = req.query;
 
-    res.json({ success:true,data:hotels });
+    let list = hotels;
+
+    if (status) {
+        list = list.filter(h => h.status === status);
+    }
+
+    res.json({ success:true, data: list });
 });
 //审核通过
 app.put('/api/admin/hotels/:id/approve', authMiddleware, (req, res) => {
@@ -170,10 +177,26 @@ app.post('/api/merchant/hotels/:id/submit', authMiddleware, (req, res) => {
     if (!hotel) {
         return res.status(404).json({ success:false,message:'酒店不存在' });
     }
+    if (hotel.status !== 'draft' && hotel.status !== 'rejected') {
+        return res.json({ success:false, message:'当前状态不可提交审核' });
+    }
 
     hotel.status = 'pending';
 
     res.json({ success:true,message:'提交审核成功' });
+});
+app.get('/api/merchant/hotels', authMiddleware, (req, res) => {
+
+    if (req.user.role !== 'merchant') {
+        return res.status(403).json({ success:false,message:'无权限' });
+    }
+
+    const list = hotels.filter(h => h.merchantId === req.user.id);
+
+    res.json({
+        success: true,
+        data: list
+    });
 });
 
 app.listen(3000, () => {
