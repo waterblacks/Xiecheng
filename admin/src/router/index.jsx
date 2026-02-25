@@ -8,8 +8,8 @@ import MerchantHome from '../pages/MerchantHome';
 // 修改：强制跳转到登录页面的组件
 function ForceLoginRedirect() {
     // 清除所有认证信息
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     return <Navigate to="/login" replace />;
 }
 

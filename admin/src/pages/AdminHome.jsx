@@ -7,7 +7,7 @@ const BASE = 'http://localhost:3000/api';
 
 function HotelReviewPage() {
     const [pendingList, setPendingList] = useState([]);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const load = async () => {
         const res = await fetch(`${BASE}/admin/hotels?status=pending`, {
@@ -48,6 +48,7 @@ function HotelReviewPage() {
                     <thead>
                     <tr>
                         <th>ID</th>
+                        <th>商户id</th>
                         <th>酒店名</th>
                         <th>地址</th>
                         <th>星级</th>
@@ -58,6 +59,7 @@ function HotelReviewPage() {
                     {pendingList.map(h => (
                         <tr key={h.id}>
                             <td>{h.id}</td>
+                            <td>{h.merchantId}</td>
                             <td>{h.name_cn}</td>
                             <td>{h.address}</td>
                             <td>{'★'.repeat(h.star_rating || 0)}</td>
@@ -65,7 +67,7 @@ function HotelReviewPage() {
                                 <button onClick={() => handleApprove(h.id)}>通过</button>
                                 <button
                                     onClick={() => handleReject(h.id)}
-                                    style={{ marginLeft: 8 }}
+                                    style={{marginLeft: 8}}
                                 >
                                     不通过
                                 </button>

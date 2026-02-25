@@ -1,9 +1,138 @@
 import { useEffect, useState } from 'react';
+console.log('MerchantHome FILE LOADED');
 
 const BASE = 'http://localhost:3000/api';
 
-export default function MerchantHotelPage() {
+/* ========== 顶部导航组件（移到外部） ========== */
+const Navbar = ({ tab, setTab, createNew }) => (
+    <div style={{
+        padding: 10,
+        background: '#001529',
+        color: '#fff'
+    }}>
+        <span
+            style={{ marginRight: 20, cursor: 'pointer', color: tab === 'list' ? '#1890ff' : '#fff' }}
+            onClick={() => setTab('list')}
+        >
+            我的酒店
+        </span>
 
+        <span
+            style={{ cursor: 'pointer', color: tab === 'edit' ? '#1890ff' : '#fff' }}
+            onClick={createNew}
+        >
+            新建酒店
+        </span>
+    </div>
+);
+
+/* ========== 酒店列表页组件（移到外部） ========== */
+const ListView = ({ list, editHotel }) => (
+    <div style={{ padding: 20 }}>
+        <h3>我的酒店</h3>
+
+        <table border="1" cellPadding="6" width="100%">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>酒店名</th>
+                <th>地址</th>
+                <th>价格</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {list.map(h => (
+                <tr key={h.id}>
+                    <td>{h.id}</td>
+                    <td>{h.name_cn}</td>
+                    <td>{h.address}</td>
+                    <td>{h.min_price}</td>
+                    <td>{h.status}</td>
+                    <td>
+                        <button onClick={() => editHotel(h)}>
+                            编辑
+                        </button>
+                    </td>
+                </tr>
+            ))}
+            </tbody>
+        </table>
+    </div>
+);
+
+/* ========== 编辑页组件（移到外部） ========== */
+const EditView = ({ form, onChange, save, submit, hotelId }) => (
+    <div style={{ padding: 20 }}>
+
+        <h3>{hotelId ? '编辑酒店' : '新建酒店'}</h3>
+
+        <div>
+            中文名：
+            <input name="name_cn" value={form.name_cn} onChange={onChange}/>
+        </div>
+
+        <div>
+            英文名：
+            <input name="name_en" value={form.name_en} onChange={onChange}/>
+        </div>
+
+        <div>
+            地址：
+            <input name="address" value={form.address} onChange={onChange}/>
+        </div>
+
+        <div>
+            星级：
+            <input
+                type="number"
+                name="star_rating"
+                min={1}
+                max={5}
+                value={form.star_rating}
+                onChange={onChange}
+            />
+        </div>
+
+        <div>
+            起价：
+            <input
+                type="number"
+                name="min_price"
+                min={0}
+                value={form.min_price}
+                onChange={onChange}
+            />
+        </div>
+
+        <div>
+            描述：
+            <textarea
+                name="description"
+                value={form.description}
+                onChange={onChange}
+            />
+        </div>
+
+        <br/>
+
+        <button onClick={save}>保存</button>
+
+        <button
+            onClick={submit}
+            style={{ marginLeft: 10 }}
+        >
+            提交审核
+        </button>
+
+    </div>
+);
+
+/* ========== 主组件 ========== */
+export default function MerchantHome() {
+
+    console.log('MerchantHome render');
     const token = sessionStorage.getItem('token');
 
     const [tab, setTab] = useState('list');   // list | edit
@@ -149,139 +278,24 @@ export default function MerchantHotelPage() {
         loadMyHotels();
     };
 
-    /* ========== 顶部导航 ========== */
-
-    const Navbar = () => (
-        <div style={{
-            padding: 10,
-            background: '#001529',
-            color: '#fff'
-        }}>
-            <span
-                style={{ marginRight: 20, cursor: 'pointer', color: tab === 'list' ? '#1890ff' : '#fff' }}
-                onClick={() => setTab('list')}
-            >
-                我的酒店
-            </span>
-
-            <span
-                style={{ cursor: 'pointer', color: tab === 'edit' ? '#1890ff' : '#fff' }}
-                onClick={createNew}
-            >
-                新建酒店
-            </span>
-        </div>
-    );
-
-    /* ========== 酒店列表页 ========== */
-
-    const ListView = () => (
-        <div style={{ padding: 20 }}>
-            <h3>我的酒店</h3>
-
-            <table border="1" cellPadding="6" width="100%">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>酒店名</th>
-                    <th>地址</th>
-                    <th>价格</th>
-                    <th>状态</th>
-                    <th>操作</th>
-                </tr>
-                </thead>
-                <tbody>
-                {list.map(h => (
-                    <tr key={h.id}>
-                        <td>{h.id}</td>
-                        <td>{h.name_cn}</td>
-                        <td>{h.address}</td>
-                        <td>{h.min_price}</td>
-                        <td>{h.status}</td>
-                        <td>
-                            <button onClick={() => editHotel(h)}>
-                                编辑
-                            </button>
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </div>
-    );
-
-    /* ========== 编辑页 ========== */
-
-    const EditView = () => (
-        <div style={{ padding: 20 }}>
-
-            <h3>{hotelId ? '编辑酒店' : '新建酒店'}</h3>
-
-            <div>
-                中文名：
-                <input name="name_cn" value={form.name_cn} onChange={onChange}/>
-            </div>
-
-            <div>
-                英文名：
-                <input name="name_en" value={form.name_en} onChange={onChange}/>
-            </div>
-
-            <div>
-                地址：
-                <input name="address" value={form.address} onChange={onChange}/>
-            </div>
-
-            <div>
-                星级：
-                <input
-                    type="number"
-                    name="star_rating"
-                    min={1}
-                    max={5}
-                    value={form.star_rating}
-                    onChange={onChange}
-                />
-            </div>
-
-            <div>
-                起价：
-                <input
-                    type="number"
-                    name="min_price"
-                    min={0}
-                    value={form.min_price}
-                    onChange={onChange}
-                />
-            </div>
-
-            <div>
-                描述：
-                <textarea
-                    name="description"
-                    value={form.description}
-                    onChange={onChange}
-                />
-            </div>
-
-            <br/>
-
-            <button onClick={save}>保存</button>
-
-            <button
-                onClick={submit}
-                style={{ marginLeft: 10 }}
-            >
-                提交审核
-            </button>
-
-        </div>
-    );
-
+    /* ========== 渲染 ========== */
     return (
         <div>
-            <Navbar />
-            {tab === 'list' ? <ListView /> : <EditView />}
+            <Navbar
+                tab={tab}
+                setTab={setTab}
+                createNew={createNew}
+            />
+            {tab === 'list'
+                ? <ListView list={list} editHotel={editHotel} />
+                : <EditView
+                    form={form}
+                    onChange={onChange}
+                    save={save}
+                    submit={submit}
+                    hotelId={hotelId}
+                />
+            }
         </div>
     );
 }
