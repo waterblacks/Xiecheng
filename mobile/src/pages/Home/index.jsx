@@ -278,31 +278,41 @@ const HomePage = () => {
       </Popup>
 
       <div className="banner-section">
-        <Swiper 
-          autoplay 
-          loop 
-          style={{ '--border-radius': '12px' }}
-        >
-          {(loading ? [] : featured).map((hotel) => (
-            <Swiper.Item key={hotel.id}>
-              <div
-                className="banner-item"
-                onClick={() => handleHotelClick(hotel.id)}
-              >
-                <img src={hotel.images[0]} alt={hotel.name_cn} />
-                <div className="banner-overlay">
-                  <div className="banner-tag">热门推荐</div>
-                  <h3>{hotel.name_cn}</h3>
-                  <p className="banner-price">
-                    <span className="price-symbol">¥</span>
-                    <span className="price-value">{hotel.min_price}</span>
-                    <span className="price-unit">起</span>
-                  </p>
+        {/* ✅ 防御性处理：检查 featured 是否为空 */}
+        {featured && featured.length > 0 ? (
+          <Swiper
+            autoplay
+            loop
+            style={{ '--border-radius': '12px' }}
+          >
+            {(loading ? [] : featured).map((hotel) => (
+              <Swiper.Item key={hotel.id}>
+                <div
+                  className="banner-item"
+                  onClick={() => handleHotelClick(hotel.id)}
+                >
+                  <img src={hotel.images[0]} alt={hotel.name_cn} />
+                  <div className="banner-overlay">
+                    <div className="banner-tag">热门推荐</div>
+                    <h3>{hotel.name_cn}</h3>
+                    <p className="banner-price">
+                      <span className="price-symbol">¥</span>
+                      <span className="price-value">{hotel.min_price}</span>
+                      <span className="price-unit">起</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Swiper.Item>
-          ))}
-        </Swiper>
+              </Swiper.Item>
+            ))}
+          </Swiper>
+        ) : (
+            // ✅ 当没有精选酒店时显示占位内容
+            !loading && (
+                <div className="banner-placeholder">
+                  <p>暂无精选酒店</p>
+                </div>
+            )
+        )}
       </div>
 
       <div className="category-section">

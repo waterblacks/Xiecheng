@@ -327,39 +327,51 @@ const HotelListPage = () => {
   );
 };
 
-const HotelCard = ({ hotel, onClick, isRecommended }) => (
-  <div
-    className={`hotel-item ${isRecommended ? 'recommended' : ''}`}
-    onClick={() => onClick(hotel.id)}
-  >
-    <div className="hotel-image-wrapper">
-      <img src={hotel.images[0]} alt={hotel.name_cn} className="hotel-image" />
-      {hotel.star_rating === 5 && (
-        <span className="hotel-badge">豪华</span>
-      )}
-    </div>
-    <div className="hotel-content">
-      <h3 className="hotel-name">{hotel.name_cn}</h3>
-      <p className="hotel-name-en">{hotel.name_en}</p>
-      <div className="hotel-rating">
-        <span className="hotel-stars">
-          {'★'.repeat(hotel.star_rating)}
-          {'☆'.repeat(5 - hotel.star_rating)}
-        </span>
-        <span className="star-label">{hotel.star_rating}星级</span>
-      </div>
-      <p className="hotel-address">
-        <EnvironmentOutline /> {hotel.address}
-      </p>
-      <div className="hotel-price-row">
-        <div className="hotel-price">
-          <span className="price-symbol">¥</span>
-          <span className="price-value">{hotel.min_price}</span>
-          <span className="price-unit">起</span>
+const HotelCard = ({ hotel, onClick, isRecommended }) => {
+  // 防御性处理：提供默认值
+  const defaultImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400';
+  const hotelImage = hotel?.images?.[0] || defaultImage;
+  const hotelName = hotel?.name_cn || '未知酒店';
+  const hotelNameEn = hotel?.name_en || '';
+  const starRating = hotel?.star_rating || 0;
+  const address = hotel?.address || '地址未知';
+  const minPrice = hotel?.min_price || 0;
+
+  return (
+      <div
+          className={`hotel-item ${isRecommended ? 'recommended' : ''}`}
+          onClick={() => onClick(hotel?.id)}
+      >
+        <div className="hotel-image-wrapper">
+          <img src={hotelImage} alt={hotelName} className="hotel-image" />
+          {starRating === 5 && (
+              <span className="hotel-badge">豪华</span>
+          )}
+        </div>
+        <div className="hotel-content">
+          <h3 className="hotel-name">{hotelName}</h3>
+          {hotelNameEn && <p className="hotel-name-en">{hotelNameEn}</p>}
+          <div className="hotel-rating">
+          <span className="hotel-stars">
+            {'★'.repeat(starRating)}
+            {'☆'.repeat(5 - starRating)}
+          </span>
+            <span className="star-label">{starRating}星级</span>
+          </div>
+          <p className="hotel-address">
+            <EnvironmentOutline /> {address}
+          </p>
+          <div className="hotel-price-row">
+            <div className="hotel-price">
+              <span className="price-symbol">¥</span>
+              <span className="price-value">{minPrice}</span>
+              <span className="price-unit">起</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-);
+  );
+};
+
 
 export default HotelListPage;

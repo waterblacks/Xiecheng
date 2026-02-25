@@ -37,7 +37,8 @@ hotelList.forEach(mockHotel => {
         min_price: mockHotel.min_price,
         status: 'approved', // 默认状态为已审核通过
         created_at: new Date().toISOString().slice(0,10),
-        description: `${mockHotel.name_cn}位于${mockHotel.address.split('市')[0]}核心地段，是一家集商务与休闲于一体的豪华酒店。`
+        description: `${mockHotel.name_cn}位于${mockHotel.address.split('市')[0]}核心地段，是一家集商务与休闲于一体的豪华酒店。`,
+        images: mockHotel.images || [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
     });
 });
 
@@ -54,9 +55,12 @@ app.get('/api/hotels/featured/list', (req, res) => {
         .map(h => ({
             id: h.id,
             name_cn: h.name_cn,
+            name_en: h.name_en,
             star_rating: h.star_rating,
             min_price: h.min_price,
-            images: [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
+            images: h.images && h.images.length > 0
+                ? h.images
+                : [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
         }));
 
     res.json({
@@ -98,6 +102,14 @@ app.get('/api/hotels/list', (req, res) => {
     const pageSize = parseInt(req.query.pageSize) || 10;
     const start = (page - 1) * pageSize;
     const paged = filtered.slice(start, start + pageSize);
+
+    // 添加 images 字段
+    const dataWithImages = paged.map(h => ({
+        ...h,
+        images: h.images && h.images.length > 0
+            ? h.images
+            : [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
+    }));
 
     res.json({
         success: true,
@@ -143,6 +155,14 @@ app.get('/api/hotels/search', (req, res) => {
     }
 
     const allResults = [...matched, ...other];
+
+    // 添加 images 字段
+    const dataWithImages = allResults.map(h => ({
+        ...h,
+        images: h.images && h.images.length > 0
+            ? h.images
+            : [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
+    }));
 
     res.json({
         success: true,
@@ -269,7 +289,7 @@ app.get('/api/hotels/:id/rooms', (req, res) => {
 });
 
 /* =========================
-   管理员首页统计
+   管理员首页
 ========================= */
 //查看全部酒店
 app.get('/api/admin/hotels', authMiddleware, (req, res) => {
@@ -340,7 +360,7 @@ app.put('/api/admin/hotels/:id/online', authMiddleware, (req, res) => {
     res.json({ success:true,message:'酒店已恢复上线' });
 });
 /* =========================
-   商户首页：我的酒店
+   商户首页
 ========================= */
 //新建酒店
 app.post('/api/merchant/hotels', authMiddleware, (req, res) => {
