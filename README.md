@@ -1,4 +1,4 @@
-# Yisu Hotel Booking System (Course Project)
+# Yisu Hotel Booking System (Xiecheng Bootcamp Project)
 
 ## 1. Project Overview
 A frontend project for hotel reservations built with React and Node.js.
@@ -30,12 +30,50 @@ A frontend project for hotel reservations built with React and Node.js.
 - Auth: JWT
 - Data: In-memory data + mock initialization
 
-## 4. Project Structure (Simplified)
+## 4. Project Structure
 ```text
 Xiecheng/
-├── mobile/    # Mobile client
-├── admin/     # PC admin panel
-└── server/    # Backend API
+├── README.md
+├── mobile/                               
+│   ├── package.json
+│   └── src/
+│       ├── pages/                     
+│       │   ├── Home/
+│       │   ├── HotelList/
+│       │   └── HotelDetail/
+│       ├── components/                   
+│       │   ├── CitySelectorPopup/
+│       │   ├── DatePickerPopup/
+│       │   ├── OptionSelectorPopup/
+│       │   └── DateRangePicker/
+│       ├── store/                      
+│       │   ├── index.js
+│       │   └── slices/
+│       │       └── hotelSlice.js
+│       ├── api/                          
+│       │   └── axios.js
+│       ├── App.jsx                    
+│       └── main.jsx                      
+├── admin/                               
+│   ├── package.json
+│   └── src/
+│       ├── pages/                    
+│       ├── api/                          
+│       ├── router/                        
+│       └── main.jsx
+└── server/                           
+    ├── app.js                      
+    ├── routes/                        
+    │   ├── auth.js
+    │   ├── categories.js
+    │   └── hotels.js
+    ├── middleware/
+    │   └── auth.js                      
+    ├── mocks/                          
+    │   ├── hotels.js
+    │   └── index.js
+    └── package.json
+
 ```
 
 ## 5. Quick Start
@@ -54,6 +92,7 @@ cd mobile
 npm install
 npm run dev
 ```
+Default port: `3002`
 
 ### 5.3 Start PC Admin Panel
 ```bash
@@ -61,3 +100,4 @@ cd admin
 npm install
 npm run dev
 ```
+Default port: `3001`
