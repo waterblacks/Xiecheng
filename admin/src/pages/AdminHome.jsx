@@ -9,6 +9,22 @@ function HotelReviewPage() {
     const [pendingList, setPendingList] = useState([]);
     const token = sessionStorage.getItem('token');
 
+    //  新增状态：用于控制拒绝弹窗
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [currentHotelId, setCurrentHotelId] = useState(null);
+    const [selectedReasons, setSelectedReasons] = useState([]);
+    const [customReason, setCustomReason] = useState('');
+
+    // 预设的拒绝原因选项
+    const rejectOptions = [
+        '信息填写不完整',
+        '图片质量不合格',
+        '地址信息有误',
+        '价格设置不合理',
+        '涉嫌虚假宣传'
+    ];
+
+
     const load = async () => {
         const res = await fetch(`${BASE}/admin/hotels?status=pending`, {
             headers:{ Authorization:`Bearer ${token}` }
@@ -25,15 +41,53 @@ function HotelReviewPage() {
         load();
     };
 
-    const handleReject = async (id) => {
-        await fetch(`${BASE}/admin/hotels/${id}/reject`, {
+    // 打开拒绝弹窗
+    const openRejectModal = (id) => {
+        setCurrentHotelId(id);
+        setSelectedReasons([]);
+        setCustomReason('');
+        setShowRejectModal(true);
+    };
+
+    // 处理多选框变化
+    const handleReasonChange = (reason) => {
+        if (selectedReasons.includes(reason)) {
+            setSelectedReasons(selectedReasons.filter(r => r !== reason));
+        } else {
+            setSelectedReasons([...selectedReasons, reason]);
+        }
+    };
+
+    // 提交拒绝原因
+    const submitReject = async () => {
+        // 合并多选原因和自定义原因
+        const allReasons = [...selectedReasons];
+        if (customReason.trim()) {
+            allReasons.push(customReason.trim());
+        }
+
+        if (allReasons.length === 0) {
+            alert('请选择或输入拒绝原因');
+            return;
+        }
+
+        const reasonText = allReasons.join('；');
+
+        await fetch(`${BASE}/admin/hotels/${currentHotelId}/reject`, {
             method:'PUT',
-            headers:{ Authorization:`Bearer ${token}` }
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization:`Bearer ${token}`
+            },
+            body: JSON.stringify({ reason: reasonText })
         });
+
+        setShowRejectModal(false);
         load();
     };
 
     useEffect(() => {
+        document.title = '管理中心 - 酒店管理系统';
         load();
     }, []);
 
@@ -66,7 +120,7 @@ function HotelReviewPage() {
                             <td>
                                 <button onClick={() => handleApprove(h.id)}>通过</button>
                                 <button
-                                    onClick={() => handleReject(h.id)}
+                                    onClick={() => openRejectModal(h.id)}
                                     style={{marginLeft: 8}}
                                 >
                                     不通过
@@ -76,6 +130,81 @@ function HotelReviewPage() {
                     ))}
                     </tbody>
                 </table>
+            )}
+            {/* ✅ 拒绝原因弹窗 */}
+            {showRejectModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        background: '#fff',
+                        padding: 20,
+                        borderRadius: 8,
+                        width: 400,
+                        maxWidth: '90%'
+                    }}>
+                        <h3>请选择/输入拒绝原因</h3>
+
+                        <div style={{ margin: '15px 0' }}>
+                            {rejectOptions.map(opt => (
+                                <div key={opt} style={{ margin: '8px 0' }}>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedReasons.includes(opt)}
+                                            onChange={() => handleReasonChange(opt)}
+                                        />
+                                        <span style={{ marginLeft: 8 }}>{opt}</span>
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ margin: '15px 0' }}>
+                            <div style={{ marginBottom: 5 }}>其他原因：</div>
+                            <textarea
+                                style={{
+                                    width: '100%',
+                                    height: 80,
+                                    padding: 8,
+                                    border: '1px solid #ddd',
+                                    borderRadius: 4
+                                }}
+                                placeholder="请输入其他原因..."
+                                value={customReason}
+                                onChange={e => setCustomReason(e.target.value)}
+                            />
+                        </div>
+
+                        <div style={{ textAlign: 'right', marginTop: 20 }}>
+                            <button
+                                onClick={() => setShowRejectModal(false)}
+                                style={{ marginRight: 10 }}
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={submitReject}
+                                style={{
+                                    background: '#ff4d4f',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '5px 15px',
+                                    borderRadius: 4,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                确认拒绝
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

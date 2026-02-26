@@ -330,12 +330,17 @@ const HotelListPage = () => {
 const HotelCard = ({ hotel, onClick, isRecommended }) => {
   // 防御性处理：提供默认值
   const defaultImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400';
-  const hotelImage = hotel?.images?.[0] || defaultImage;
+  const hotelImage =
+      hotel?.images?.[0]?.url ||
+      hotel?.images?.[0] ||
+      defaultImage;
   const hotelName = hotel?.name_cn || '未知酒店';
   const hotelNameEn = hotel?.name_en || '';
   const starRating = hotel?.star_rating || 0;
   const address = hotel?.address || '地址未知';
   const minPrice = hotel?.min_price || 0;
+
+  console.log(`[hotellist展示] 酒店ID: ${hotel?.id}, 名称:${hotelName}, 图片URL: ${hotelImage}`);
 
   return (
       <div

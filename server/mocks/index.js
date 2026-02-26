@@ -1,4 +1,4 @@
-import { featuredHotels, hotelList, hotelDetail, hotelRooms, categories } from './hotels';
+import { featuredHotels, hotelList, hotelDetail, hotelRooms, categories, updateHotelDetail } from './hotels';
 
 const matchUrl = (url, pattern) => {
   const regex = new RegExp(`^${pattern.replace(/:id/g, '(\\d+)')}$`);
@@ -26,7 +26,7 @@ const mockHandlers = {
     if (params?.max_price) {
       filtered = filtered.filter((h) => h.min_price <= parseInt(params.max_price));
     }
-    
+
     if (params?.sort_by === 'min_price' && params?.sort_order === 'ASC') {
       filtered.sort((a, b) => a.min_price - b.min_price);
     } else if (params?.sort_by === 'min_price' && params?.sort_order === 'DESC') {
@@ -34,7 +34,7 @@ const mockHandlers = {
     } else if (params?.sort_by === 'star_rating') {
       filtered.sort((a, b) => b.star_rating - a.star_rating);
     }
-    
+
     const page = parseInt(params?.page) || 1;
     const pageSize = parseInt(params?.pageSize) || 10;
     const start = (page - 1) * pageSize;
@@ -55,15 +55,15 @@ const mockHandlers = {
   'GET /hotels/search': (params) => {
     let matched = [];
     let other = [];
-    
+
     if (params?.keyword) {
       const kw = params.keyword.toLowerCase();
       const kwCn = params.keyword;
-      
+
       hotelList.forEach((h) => {
         const nameMatch = h.name_cn.includes(kwCn) || h.name_en.toLowerCase().includes(kw);
         const addressMatch = h.address.includes(kwCn);
-        
+
         if (nameMatch || addressMatch) {
           matched.push({ ...h, is_matched: true });
         } else {
@@ -73,7 +73,7 @@ const mockHandlers = {
     } else {
       matched = hotelList.map(h => ({ ...h, is_matched: true }));
     }
-    
+
     if (params?.city) {
       matched = matched.filter((h) => h.address.includes(params.city));
       other = other.filter((h) => h.address.includes(params.city));
@@ -90,9 +90,9 @@ const mockHandlers = {
       matched = matched.filter((h) => h.min_price <= parseInt(params.max_price));
       other = other.filter((h) => h.min_price <= parseInt(params.max_price));
     }
-    
+
     const allResults = [...matched, ...other];
-    
+
     return {
       success: true,
       data: allResults,
@@ -101,21 +101,45 @@ const mockHandlers = {
     };
   },
 
-  'GET /hotels/:id': (params, id) => ({
-    success: true,
-    data: hotelDetail[id] || hotelDetail[1],
-  }),
+  'GET /hotels/:id': (params, id) => {
+    const hotelData = hotelDetail[id];
+    if (!hotelData) {
+      return { success: false, message: '酒店不存在' };
+    }
+    return { success: true, data: hotelData };
+  },
 
-  'GET /hotels/:id/rooms': (params, id) => ({
-    success: true,
-    data: hotelRooms[id] || hotelRooms[1],
-  }),
+  'GET /hotels/:id/rooms': (params, id) => {
+    const roomsData = hotelRooms[id];
+    if (!roomsData) {
+      return { success: false, message: '酒店房型不存在' };
+    }
+    return { success: true, data: roomsData };
+  },
 
   'GET /categories': () => ({
     success: true,
     data: categories,
   }),
 };
+
+// 添加商户提交数据的处理（模拟）
+const handleMerchantSubmission = (hotelId, submissionData) => {
+  // 更新酒店详情
+  updateHotelDetail(hotelId, {
+    images: submissionData.images || hotelDetail[hotelId].images,
+    facilities: submissionData.facilities || hotelDetail[hotelId].facilities,
+    attractions: submissionData.attractions || hotelDetail[hotelId].attractions,
+    // 可以添加更多字段
+  });
+};
+
+// 模拟商户提交数据（测试用）
+// handleMerchantSubmission(1, {
+//   images: [{ id: 1, url: 'https://example.com/new-image.jpg' }],
+//   facilities: [{ id: 1, facility_type: '新设施', description: '新设施描述' }],
+//   attractions: [{ id: 1, name: '新景点', type: 'attraction', distance: '0.5公里' }],
+// });
 
 const matchRequest = (method, url, params, _body) => {
   const cleanUrl = url.replace(/^\/api/, '').split('?')[0];
@@ -140,4 +164,6 @@ export default {
   hotelDetail,
   hotelRooms,
   categories,
+  updateHotelDetail, // 导出更新函数
+  handleMerchantSubmission, // 导出商户提交处理函数
 };

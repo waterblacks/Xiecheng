@@ -42,6 +42,7 @@ export const fetchHotelDetail = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await api.get(`/hotels/${id}`);
+      console.log('API返回的酒店详情:', response.data); // 调试日志
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -151,6 +152,7 @@ const hotelSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchHotelDetail.fulfilled, (state, action) => {
+        console.log('更新currentHotel:', action.payload); // 调试日志
         state.loading = false;
         state.currentHotel = action.payload;
       })

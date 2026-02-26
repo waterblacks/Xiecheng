@@ -212,7 +212,8 @@ const hotelList = [
   },
 ];
 
-const generateHotelDetail = (hotel) => ({
+// 修改 generateHotelDetail 函数，支持自定义图片、设施和景点
+const generateHotelDetail = (hotel, customImages = null, customFacilities = null, customAttractions = null) => ({
   id: hotel.id,
   name_cn: hotel.name_cn,
   name_en: hotel.name_en,
@@ -222,13 +223,15 @@ const generateHotelDetail = (hotel) => ({
   description: `${hotel.name_cn}位于${hotel.address.split('市')[0]}核心地段，是一家集商务与休闲于一体的豪华酒店。酒店设施齐全，服务周到，是您出行住宿的理想选择。`,
   latitude: 31.2 + Math.random() * 0.1,
   longitude: 121.4 + Math.random() * 0.1,
-  images: [
+  // 使用自定义图片或默认图片
+  images: customImages || [
     { id: 1, url: hotel.images[0]?.replace('w=400', 'w=800') || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800', type: 'banner', display_order: 0 },
     { id: 2, url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800', type: 'room', display_order: 1 },
     { id: 3, url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800', type: 'facility', display_order: 2 },
     { id: 4, url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800', type: 'lobby', display_order: 3 },
   ],
-  facilities: [
+  // 使用自定义设施或默认设施
+  facilities: customFacilities || [
     { id: 1, facility_type: '免费WiFi', description: '全馆免费高速WiFi' },
     { id: 2, facility_type: '游泳池', description: '室内恒温泳池' },
     { id: 3, facility_type: '健身房', description: '24小时健身中心' },
@@ -236,7 +239,8 @@ const generateHotelDetail = (hotel) => ({
     { id: 5, facility_type: '餐厅', description: '多家特色餐厅' },
     { id: 6, facility_type: '停车场', description: '免费停车服务' },
   ],
-  attractions: [
+  // 使用自定义景点或默认景点
+  attractions: customAttractions || [
     { id: 1, name: '市中心商业区', type: 'attraction', distance: '0.5公里' },
     { id: 2, name: '地铁站', type: 'attraction', distance: '0.3公里' },
     { id: 3, name: '购物中心', type: 'attraction', distance: '1.0公里' },
@@ -246,64 +250,75 @@ const generateHotelDetail = (hotel) => ({
   ] : [],
 });
 
+// 初始化酒店详情，使用默认数据
 const hotelDetail = {};
 hotelList.forEach(hotel => {
   hotelDetail[hotel.id] = generateHotelDetail(hotel);
 });
 
+// 添加更新函数，用于商户提交后更新酒店详情
+const updateHotelDetail = (hotelId, updates) => {
+  if (hotelDetail[hotelId]) {
+    hotelDetail[hotelId] = {
+      ...hotelDetail[hotelId],
+      ...updates,
+    };
+  }
+};
+
 const generateRooms = (hotelId, basePrice) => [
-  { 
-    id: hotelId * 10 + 1, 
-    hotel_id: hotelId, 
-    name: '标准客房', 
-    base_price: basePrice, 
-    description: '温馨舒适的标准房间', 
-    max_guests: 2, 
-    bed_type: '大床', 
-    area: 35, 
-    nights: 1, 
+  {
+    id: hotelId * 10 + 1,
+    hotel_id: hotelId,
+    name: '标准客房',
+    base_price: basePrice,
+    description: '温馨舒适的标准房间',
+    max_guests: 2,
+    bed_type: '大床',
+    area: 35,
+    nights: 1,
     total_price: `${basePrice}.00`,
     image: null,
     amenities: ['免费WiFi', '空调', '电视', '淋浴'],
   },
-  { 
-    id: hotelId * 10 + 2, 
-    hotel_id: hotelId, 
-    name: '豪华客房', 
-    base_price: Math.floor(basePrice * 1.3), 
-    description: '宽敞明亮的豪华房间', 
-    max_guests: 2, 
-    bed_type: '大床', 
-    area: 45, 
-    nights: 1, 
+  {
+    id: hotelId * 10 + 2,
+    hotel_id: hotelId,
+    name: '豪华客房',
+    base_price: Math.floor(basePrice * 1.3),
+    description: '宽敞明亮的豪华房间',
+    max_guests: 2,
+    bed_type: '大床',
+    area: 45,
+    nights: 1,
     total_price: `${Math.floor(basePrice * 1.3)}.00`,
     image: null,
     amenities: ['免费WiFi', '空调', '电视', '浴缸', '迷你吧'],
   },
-  { 
-    id: hotelId * 10 + 3, 
-    hotel_id: hotelId, 
-    name: '行政套房', 
-    base_price: Math.floor(basePrice * 2), 
-    description: '独立起居室，专属服务', 
-    max_guests: 2, 
-    bed_type: '特大床', 
-    area: 65, 
-    nights: 1, 
+  {
+    id: hotelId * 10 + 3,
+    hotel_id: hotelId,
+    name: '行政套房',
+    base_price: Math.floor(basePrice * 2),
+    description: '独立起居室，专属服务',
+    max_guests: 2,
+    bed_type: '特大床',
+    area: 65,
+    nights: 1,
     total_price: `${Math.floor(basePrice * 2)}.00`,
     image: null,
     amenities: ['免费WiFi', '空调', '电视', '浴缸', '迷你吧', '行政酒廊'],
   },
-  { 
-    id: hotelId * 10 + 4, 
-    hotel_id: hotelId, 
-    name: '家庭房', 
-    base_price: Math.floor(basePrice * 1.5), 
-    description: '适合家庭入住', 
-    max_guests: 4, 
-    bed_type: '双床', 
-    area: 55, 
-    nights: 1, 
+  {
+    id: hotelId * 10 + 4,
+    hotel_id: hotelId,
+    name: '家庭房',
+    base_price: Math.floor(basePrice * 1.5),
+    description: '适合家庭入住',
+    max_guests: 4,
+    bed_type: '双床',
+    area: 55,
+    nights: 1,
     total_price: `${Math.floor(basePrice * 1.5)}.00`,
     image: null,
     amenities: ['免费WiFi', '空调', '电视', '淋浴', '儿童用品'],
@@ -331,5 +346,6 @@ export {
   hotelList,
   hotelDetail,
   hotelRooms,
-  categories
+  categories,
+  updateHotelDetail, // 导出更新函数
 };

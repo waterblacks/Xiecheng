@@ -14,7 +14,10 @@ import { hotelList } from './mocks/hotels.js';
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// 将限制提高到 50MB，足够存放多张 Base64 图片
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ limit: '25mb', extended: true }));
+
 
 // 静态文件服务（用于提供 mock 数据文件）
 app.use('/mocks', express.static(path.join(__dirname, '../mobile/src/mocks')));
@@ -106,9 +109,10 @@ app.get('/api/hotels/list', (req, res) => {
     // 添加 images 字段
     const dataWithImages = paged.map(h => ({
         ...h,
+        // 统一格式：将字符串数组转为对象数组
         images: h.images && h.images.length > 0
-            ? h.images
-            : [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
+            ? h.images.map((img, index) => ({ id: index, url: img }))
+            : [{ id: 0, url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400' }]
     }));
 
     res.json({
@@ -159,9 +163,10 @@ app.get('/api/hotels/search', (req, res) => {
     // 添加 images 字段
     const dataWithImages = allResults.map(h => ({
         ...h,
+        // 统一格式：将字符串数组转为对象数组
         images: h.images && h.images.length > 0
-            ? h.images
-            : [`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400`]
+            ? h.images.map((img, index) => ({ id: index, url: img }))
+            : [{ id: 0, url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400' }]
     }));
 
     res.json({
@@ -185,38 +190,69 @@ app.get('/api/hotels/:id', (req, res) => {
         return res.status(403).json({ success: false, message: '酒店未审核通过' });
     }
 
+    // 确保前端接收到的是 { id, url } 格式
+    const formatImages = (imgs) => {
+        if (!imgs || imgs.length === 0) {
+            // 如果没有图片，给一张默认占位图
+            return [{ id: 1, url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400' }];
+        }
+        return imgs.map((img, index) => {
+            // 兼容商户端可能上传的字符串格式或对象格式
+            if (typeof img === 'string') {
+                return { id: index, url: img };
+            }
+            // 如果已经是对象，直接返回，并确保有id
+            return { id: img.id || index, url: img.url || img };
+        });
+    };
+
+    // 确保前端接收到的是 { id, facility_type } 格式
+    const formatFacilities = (facs) => {
+        if (!facs || facs.length === 0) {
+            return []; // 商户没填则不显示
+        }
+        return facs.map((f, index) => {
+            // 兼容字符串格式 (如 ['WiFi', '停车场'])
+            if (typeof f === 'string') {
+                return { id: index, facility_type: f, description: '' };
+            }
+            // 如果是对象，确保 facility_type 字段存在
+            return {
+                id: f.id || index,
+                facility_type: f.facility_type || f.name,
+                description: f.description || ''
+            };
+        });
+    };
+
     const hotelDetail = {
         id: hotel.id,
         name_cn: hotel.name_cn,
         name_en: hotel.name_en,
         address: hotel.address,
         star_rating: hotel.star_rating,
-        opening_date: '2015-01-01',
+        opening_date: hotel.opening_date || '2015-01-01',
         description: hotel.description,
-        latitude: 31.2 + Math.random() * 0.1,
-        longitude: 121.4 + Math.random() * 0.1,
-        images: [
-            { id: 1, url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800', type: 'banner', display_order: 0 },
-            { id: 2, url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800', type: 'room', display_order: 1 },
-            { id: 3, url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800', type: 'facility', display_order: 2 },
-            { id: 4, url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800', type: 'lobby', display_order: 3 },
-        ],
-        facilities: [
+        latitude: hotel.latitude || (31.2 + Math.random() * 0.1),
+        longitude: hotel.longitude || (121.4 + Math.random() * 0.1),
+
+        images: hotel.images && hotel.images.length > 0
+            ? hotel.images.map((img, index) => ({ id: index, url: img }))
+            : [
+                { id: 1, url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800' , type: 'banner', display_order: 0 },
+                // ...（默认图片）
+            ],
+        // ✅ 优先使用数据库中的设施数据
+        facilities: hotel.facilities || [
             { id: 1, facility_type: '免费WiFi', description: '全馆免费高速WiFi' },
-            { id: 2, facility_type: '游泳池', description: '室内恒温泳池' },
-            { id: 3, facility_type: '健身房', description: '24小时健身中心' },
-            { id: 4, facility_type: 'SPA', description: '豪华SPA水疗中心' },
-            { id: 5, facility_type: '餐厅', description: '多家特色餐厅' },
-            { id: 6, facility_type: '停车场', description: '免费停车服务' },
+            // ...（默认设施）
         ],
-        attractions: [
+        // ✅ 优先使用数据库中的景点数据
+        attractions: hotel.attractions || [
             { id: 1, name: '市中心商业区', type: 'attraction', distance: '0.5公里' },
-            { id: 2, name: '地铁站', type: 'attraction', distance: '0.3公里' },
-            { id: 3, name: '购物中心', type: 'attraction', distance: '1.0公里' },
+            // ...（默认景点）
         ],
-        promotions: hotel.id <= 5 ? [
-            { id: 1, type: 'holiday', discount: 0.85, description: '限时特惠85折', start_date: '2026-01-20', end_date: '2026-03-10' },
-        ] : [],
+        promotions: hotel.promotions || (hotel.id <= 5 ? [/* 默认促销 */] : []),
     };
 
     res.json({
@@ -330,6 +366,7 @@ app.put('/api/admin/hotels/:id/reject', authMiddleware, (req, res) => {
     const hotel = hotels.find(h => h.id == req.params.id);
 
     hotel.status = 'rejected';
+    hotel.reject_reason = req.body.reason || '未填写原因';
 
     res.json({ success:true,message:'审核不通过' });
 });
@@ -362,7 +399,7 @@ app.put('/api/admin/hotels/:id/online', authMiddleware, (req, res) => {
 /* =========================
    商户首页
 ========================= */
-//新建酒店
+// 新建酒店
 app.post('/api/merchant/hotels', authMiddleware, (req, res) => {
 
     if (req.user.role !== 'merchant') {
@@ -372,12 +409,32 @@ app.post('/api/merchant/hotels', authMiddleware, (req, res) => {
     const hotel = {
         id: hotelId++,
         merchantId: req.user.id,
-        ...req.body,
-        status: 'draft',   // 草稿
+
+        // 基本信息
+        name_cn: req.body.name_cn,
+        name_en: req.body.name_en || '',
+        address: req.body.address,
+        star_rating: req.body.star_rating || 5,
+        min_price: req.body.min_price || 0,
+        opening_date: req.body.opening_date || new Date().toISOString().slice(0, 10),
+        description: req.body.description || '', // 默认为空，不再生成假描述
+        latitude: req.body.latitude || (31.2 + Math.random() * 0.1),
+        longitude: req.body.longitude || (121.4 + Math.random() * 0.1),
+
+        // 默认为空数组，不再填充假数据
+        images: req.body.images || [],
+        facilities: req.body.facilities || [],
+        attractions: req.body.attractions || [],
+        promotions: req.body.promotions || [],
+
+        // 状态信息
+        status: 'draft',
         created_at: new Date().toISOString().slice(0,10)
     };
 
     hotels.push(hotel);
+
+    console.log(`[新建酒店] 酒店ID: ${hotel.id}, 名称:${hotel.name_cn}, 图片数量: ${hotel.images.length}, 图片URL:${hotel.images.join(', ')}`);
 
     res.json({
         success: true,
@@ -385,7 +442,7 @@ app.post('/api/merchant/hotels', authMiddleware, (req, res) => {
         data: { id: hotel.id }
     });
 });
-//更新酒店
+// 更新酒店
 app.put('/api/merchant/hotels/:id', authMiddleware, (req, res) => {
 
     if (req.user.role !== 'merchant') {
@@ -402,9 +459,24 @@ app.put('/api/merchant/hotels/:id', authMiddleware, (req, res) => {
         return res.status(404).json({ success:false,message:'酒店不存在' });
     }
 
-    Object.assign(hotel, req.body);
+    // ✅ 更新所有字段
+    Object.assign(hotel, {
+        name_cn: req.body.name_cn,
+        name_en: req.body.name_en,
+        address: req.body.address,
+        star_rating: req.body.star_rating,
+        min_price: req.body.min_price,
+        opening_date: req.body.opening_date,
+        description: req.body.description,
+        latitude: req.body.latitude,
+        longitude: req.body.longitude,
+        images: req.body.images,
+        facilities: req.body.facilities,
+        attractions: req.body.attractions,
+        promotions: req.body.promotions
+    });
 
-    res.json({ success:true,message:'更新成功' });
+    res.json({ success:true, message:'更新成功' });
 });
 //提交审核
 app.post('/api/merchant/hotels/:id/submit', authMiddleware, (req, res) => {
