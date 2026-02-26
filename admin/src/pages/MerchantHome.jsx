@@ -1,24 +1,20 @@
-import { useEffect, useState} from 'react';
-console.log('MerchantHome FILE LOADED');
+import { useEffect, useState } from 'react';
+import './MerchantHome.css'; // 引入分离出来的 CSS 文件
 
 const BASE = 'http://localhost:3000/api';
 
 /* ========== 顶部导航组件 ========== */
 const Navbar = ({ tab, setTab, createNew }) => (
-    <div style={{
-        padding: 10,
-        background: '#001529',
-        color: '#fff'
-    }}>
+    <div className="merchant-navbar">
         <span
-            style={{ marginRight: 20, cursor: 'pointer', color: tab === 'list' ? '#1890ff' : '#fff' }}
+            className={`merchant-nav-item ${tab === 'list' ? 'active' : ''}`}
             onClick={() => setTab('list')}
         >
             我的酒店
         </span>
 
         <span
-            style={{ cursor: 'pointer', color: tab === 'edit' ? '#1890ff' : '#fff' }}
+            className={`merchant-nav-item ${tab === 'edit' ? 'active' : ''}`}
             onClick={createNew}
         >
             新建酒店
@@ -28,105 +24,106 @@ const Navbar = ({ tab, setTab, createNew }) => (
 
 /* ========== 酒店列表页组件 ========== */
 const ListView = ({ list, editHotel }) => (
-    <div style={{ padding: 20 }}>
-        <h3>我的酒店</h3>
+    <div className="merchant-content">
+        <h3 className="merchant-title">我的酒店</h3>
 
-        <table border="1" cellPadding="6" width="100%">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>酒店名</th>
-                <th>地址</th>
-                <th>价格</th>
-                <th>状态</th>
-                <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            {list.map(h => (
-                <tr key={h.id}>
-                    <td>{h.id}</td>
-                    <td>{h.name_cn}</td>
-                    <td>{h.address}</td>
-                    <td>{h.min_price}</td>
-                    <td>
-                        <span style={{
-                            color: h.status === 'rejected' ? 'red' :
-                                h.status === 'approved' ? 'green' : 'inherit'
-                        }}>
-                            {h.status}
-                        </span>
-                        {h.status === 'rejected' && h.reject_reason && (
-                            <div style={{
-                                color: '#ff4d4f',
-                                fontSize: '12px',
-                                marginTop: '4px',
-                                maxWidth: '150px'
-                            }}>
-                                原因：{h.reject_reason}
-                            </div>
-                        )}
-                    </td>
-                    <td>
-                        <button onClick={() => editHotel(h)}>
-                            编辑
-                        </button>
-                    </td>
+        <div className="hotel-list">
+            <table className="hotel-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>酒店名</th>
+                    <th>地址</th>
+                    <th>价格</th>
+                    <th>状态</th>
+                    <th>操作</th>
                 </tr>
-            ))}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {list.map(h => (
+                    <tr key={h.id}>
+                        <td>{h.id}</td>
+                        <td>{h.name_cn}</td>
+                        <td>{h.address}</td>
+                        <td>{h.min_price}</td>
+                        <td>
+                                <span className={`status-badge ${h.status === 'rejected' ? 'status-rejected' : h.status === 'approved' ? 'status-approved' : 'status-pending'}`}>
+                                    {h.status}
+                                </span>
+                            {h.status === 'rejected' && h.reject_reason && (
+                                <div className="reject-reason">
+                                    原因：{h.reject_reason}
+                                </div>
+                            )}
+                        </td>
+                        <td>
+                            <button
+                                className="action-btn"
+                                onClick={() => editHotel(h)}
+                            >
+                                编辑
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+        </div>
     </div>
 );
 
-//* ========== 编辑页组件 ========== */
+/* ========== 编辑页组件 ========== */
 const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveImage, onImageUpload, onImageTypeChange, onAddFacility, onRemoveFacility, onFacilityChange, onAddAttraction, onRemoveAttraction, onAttractionChange }) => {
 
     return (
-        <div style={{ padding: 20, maxWidth: 900 }}>
-            <h3>{hotelId ? '编辑酒店' : '新建酒店'}</h3>
+        <div className="edit-form">
+            <h3 className="section-title">{hotelId ? '编辑酒店' : '新建酒店'}</h3>
 
             {/* 基本信息 */}
-            <fieldset style={{ marginBottom: 20, padding: 15 }}>
-                <legend><strong>基本信息</strong></legend>
+            <div className="form-section">
+                <h4 className="section-title">基本信息</h4>
 
-                <div style={{ marginBottom: 10 }}>
-                    中文名：<span style={{ color: 'red' }}>*</span>
+                <div className="form-field">
+                    <label className="form-label">
+                        中文名：<span className="required-mark">*</span>
+                    </label>
                     <input
                         name="name_cn"
                         value={form.name_cn}
                         onChange={onChange}
-                        style={{ width: 300, marginLeft: 10 }}
+                        className="form-input"
                     />
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    英文名：
+                <div className="form-field">
+                    <label className="form-label">英文名：</label>
                     <input
                         name="name_en"
                         value={form.name_en}
                         onChange={onChange}
-                        style={{ width: 300, marginLeft: 10 }}
+                        className="form-input"
                     />
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    地址：<span style={{ color: 'red' }}>*</span>
+                <div className="form-field">
+                    <label className="form-label">
+                        地址：<span className="required-mark">*</span>
+                    </label>
                     <input
                         name="address"
                         value={form.address}
                         onChange={onChange}
-                        style={{ width: 400, marginLeft: 10 }}
+                        className="form-input"
                     />
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    星级：
+                <div className="form-field">
+                    <label className="form-label">星级：</label>
                     <select
                         name="star_rating"
                         value={form.star_rating}
                         onChange={onChange}
-                        style={{ marginLeft: 10, padding: '5px 10px' }}
+                        className="form-select"
                     >
                         <option value={1}>一星级</option>
                         <option value={2}>二星级</option>
@@ -136,92 +133,76 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
                     </select>
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    起价：<span style={{ color: 'red' }}>*</span>
+                <div className="form-field">
+                    <label className="form-label">
+                        起价：<span className="required-mark">*</span>
+                    </label>
                     <input
                         type="number"
                         name="min_price"
                         min={0}
                         value={form.min_price}
                         onChange={onChange}
-                        style={{ width: 120, marginLeft: 10 }}
+                        className="form-input"
                     />
-                    <span style={{ marginLeft: 5 }}>元/晚</span>
+                    <span className="price-unit">元/晚</span>
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    开业日期：
+                <div className="form-field">
+                    <label className="form-label">开业日期：</label>
                     <input
                         type="date"
                         name="opening_date"
                         value={form.opening_date}
                         onChange={onChange}
-                        style={{ marginLeft: 10 }}
+                        className="form-input"
                     />
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    酒店描述：
-                    <br />
+                <div className="form-field">
+                    <label className="form-label">酒店描述：</label>
                     <textarea
                         name="description"
                         value={form.description}
                         onChange={onChange}
-                        style={{ width: '100%', height: 80, marginTop: 5, padding: 8 }}
+                        className="form-textarea"
                         placeholder="请输入酒店描述（不填则前台不显示）"
                     />
                 </div>
 
-                <div style={{ marginBottom: 10 }}>
-                    <div style={{ display: 'inline-block', marginRight: 20 }}>
-                        纬度：
-                        <input
-                            type="number"
-                            step="0.0001"
-                            name="latitude"
-                            value={form.latitude}
-                            onChange={onChange}
-                            style={{ width: 120, marginLeft: 10 }}
-                        />
-                    </div>
-                    <div style={{ display: 'inline-block' }}>
-                        经度：
-                        <input
-                            type="number"
-                            step="0.0001"
-                            name="longitude"
-                            value={form.longitude}
-                            onChange={onChange}
-                            style={{ width: 120, marginLeft: 10 }}
-                        />
-                    </div>
+                <div className="form-field">
+                    <div className="form-label">纬度：</div>
+                    <input
+                        type="number"
+                        step="0.0001"
+                        name="latitude"
+                        value={form.latitude}
+                        onChange={onChange}
+                        className="form-input"
+                        style={{ width: 120, marginRight: 20 }}
+                    />
+                    <div className="form-label">经度：</div>
+                    <input
+                        type="number"
+                        step="0.0001"
+                        name="longitude"
+                        value={form.longitude}
+                        onChange={onChange}
+                        className="form-input"
+                        style={{ width: 120 }}
+                    />
                 </div>
-            </fieldset>
+            </div>
 
-            {/* 酒店图片 - 修正版 */}
-            <fieldset style={{ marginBottom: 20, padding: 15 }}>
-                <legend><strong>酒店图片</strong></legend>
+            {/* 酒店图片 */}
+            <div className="form-section">
+                <h4 className="section-title">酒店图片</h4>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                <div className="image-upload-area">
                     {form.images && form.images.map((img, index) => (
-                        <div key={img.id || index} style={{
-                            width: 220,
-                            padding: 10,
-                            background: '#f9f9f9',
-                            borderRadius: 4,
-                            border: '1px solid #ddd'
-                        }}>
+                        <div key={img.id || index} className="image-card">
                             {/* 图片预览区域 */}
-                            <div style={{
-                                width: '100%',
-                                height: 140,
-                                background: '#eee',
-                                marginBottom: 8,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
+                            <div className="image-preview">
                                 {img.url ? (
                                     <img
                                         src={img.url}
@@ -233,20 +214,8 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
                                 )}
                             </div>
 
-                            {/* ✅ 修正：将 input 包裹在 label 内部，实现点击触发 */}
-                            <label
-                                style={{
-                                    display: 'block',
-                                    width: '100%',
-                                    padding: '8px 0',
-                                    background: '#fff',
-                                    border: '1px dashed #1890ff',
-                                    color: '#1890ff',
-                                    cursor: 'pointer',
-                                    marginBottom: 8,
-                                    textAlign: 'center'
-                                }}
-                            >
+                            {/* 图片上传按钮 */}
+                            <label className="image-upload-btn">
                                 {img.url ? '重新上传' : '点击上传图片'}
                                 <input
                                     type="file"
@@ -255,39 +224,29 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
                                     onChange={(e) => {
                                         const file = e.target.files[0];
                                         if (file) onImageUpload(index, file);
-                                        // 清空 value 允许重复选择同一张图片
                                         e.target.value = '';
                                     }}
                                 />
                             </label>
 
                             {/* 图片类型选择 */}
-                            <div style={{ marginBottom: 5 }}>
-                                <select
-                                    value={img.type}
-                                    onChange={(e) => onImageTypeChange(index, e.target.value)}
-                                    style={{ width: '100%', padding: '3px' }}
-                                >
-                                    <option value="banner">横幅/封面</option>
-                                    <option value="room">客房</option>
-                                    <option value="facility">设施</option>
-                                    <option value="lobby">大堂</option>
-                                    <option value="exterior">外观</option>
-                                </select>
-                            </div>
+                            <select
+                                value={img.type}
+                                onChange={(e) => onImageTypeChange(index, e.target.value)}
+                                className="image-type-select"
+                            >
+                                <option value="banner">横幅/封面</option>
+                                <option value="room">客房</option>
+                                <option value="facility">设施</option>
+                                <option value="lobby">大堂</option>
+                                <option value="exterior">外观</option>
+                            </select>
 
                             {/* 删除按钮 */}
                             {form.images.length > 1 && (
                                 <button
                                     onClick={() => onRemoveImage(index)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '5px 0',
-                                        background: '#ff4d4f',
-                                        color: '#fff',
-                                        border: 'none',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="delete-image-btn"
                                 >
                                     删除
                                 </button>
@@ -298,38 +257,24 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
 
                 <button
                     onClick={onAddImage}
-                    style={{
-                        marginTop: 15,
-                        padding: '8px 16px',
-                        background: '#1890ff',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        cursor: 'pointer'
-                    }}
+                    className="add-image-btn"
                 >
                     + 添加图片
                 </button>
-            </fieldset>
+            </div>
 
             {/* 酒店设施 */}
-            <fieldset style={{ marginBottom: 20, padding: 15 }}>
-                <legend><strong>酒店设施</strong>（不添加则前台不显示）</legend>
+            <div className="form-section">
+                <h4 className="section-title">酒店设施（不添加则前台不显示）</h4>
 
                 {form.facilities && form.facilities.map((facility, index) => (
-                    <div key={facility.id || index} style={{
-                        marginBottom: 10,
-                        padding: 10,
-                        background: '#f9f9f9',
-                        borderRadius: 4,
-                        border: '1px solid #ddd'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                            <span>类型：</span>
+                    <div key={facility.id || index} className="facility-item">
+                        <div className="form-field">
+                            <label className="form-label">类型：</label>
                             <select
                                 value={facility.facility_type}
                                 onChange={(e) => onFacilityChange(index, 'facility_type', e.target.value)}
-                                style={{ padding: '5px' }}
+                                className="form-select"
                             >
                                 <option value="">请选择</option>
                                 <option value="免费WiFi">免费WiFi</option>
@@ -341,24 +286,23 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
                                 <option value="会议室">会议室</option>
                                 <option value="洗衣服务">洗衣服务</option>
                             </select>
+                        </div>
 
-                            <span>描述：</span>
+                        <div className="form-field">
+                            <label className="form-label">描述：</label>
                             <input
                                 value={facility.description}
                                 onChange={(e) => onFacilityChange(index, 'description', e.target.value)}
+                                className="form-input"
                                 style={{ flex: 1, minWidth: 150 }}
                                 placeholder="如：24小时开放"
                             />
+                        </div>
 
+                        <div className="facility-actions">
                             <button
                                 onClick={() => onRemoveFacility(index)}
-                                style={{
-                                    color: 'red',
-                                    background: 'none',
-                                    border: '1px solid red',
-                                    cursor: 'pointer',
-                                    padding: '2px 8px'
-                                }}
+                                className="delete-btn"
                             >
                                 删除
                             </button>
@@ -368,107 +312,70 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
 
                 <button
                     onClick={onAddFacility}
-                    style={{
-                        padding: '8px 16px',
-                        background: '#1890ff',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        cursor: 'pointer'
-                    }}
+                    className="add-facility-btn"
                 >
                     + 添加设施
                 </button>
-            </fieldset>
+            </div>
 
             {/* 周边景点 */}
-            <fieldset style={{ marginBottom: 20, padding: 15 }}>
-                <legend><strong>周边景点/地标</strong></legend>
+            <div className="form-section">
+                <h4 className="section-title">周边景点/地标</h4>
 
                 {form.attractions && form.attractions.map((attraction, index) => (
-                    <div key={attraction.id || index} style={{
-                        marginBottom: 10,
-                        padding: 10,
-                        background: '#f9f9f9',
-                        borderRadius: 4,
-                        border: '1px solid #ddd',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10
-                    }}>
-                        <span>名称：</span>
-                        <input
-                            value={attraction.name}
-                            onChange={(e) => onAttractionChange(index, 'name', e.target.value)}
-                            style={{ width: 120 }}
-                        />
+                    <div key={attraction.id || index} className="attraction-item">
+                        <div className="form-field">
+                            <label className="form-label">名称：</label>
+                            <input
+                                value={attraction.name}
+                                onChange={(e) => onAttractionChange(index, 'name', e.target.value)}
+                                className="form-input"
+                                style={{ width: 120 }}
+                            />
+                        </div>
 
-                        <span>距离：</span>
-                        <input
-                            value={attraction.distance}
-                            onChange={(e) => onAttractionChange(index, 'distance', e.target.value)}
-                            style={{ width: 80 }}
-                            placeholder="0.5公里"
-                        />
+                        <div className="form-field">
+                            <label className="form-label">距离：</label>
+                            <input
+                                value={attraction.distance}
+                                onChange={(e) => onAttractionChange(index, 'distance', e.target.value)}
+                                className="form-input"
+                                style={{ width: 80 }}
+                                placeholder="0.5公里"
+                            />
+                        </div>
 
-                        <button
-                            onClick={() => onRemoveAttraction(index)}
-                            style={{
-                                color: 'red',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            删除
-                        </button>
+                        <div className="attraction-actions">
+                            <button
+                                onClick={() => onRemoveAttraction(index)}
+                                className="delete-btn"
+                            >
+                                删除
+                            </button>
+                        </div>
                     </div>
                 ))}
 
                 <button
                     onClick={onAddAttraction}
-                    style={{
-                        padding: '8px 16px',
-                        background: '#1890ff',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        cursor: 'pointer'
-                    }}
+                    className="add-attraction-btn"
                 >
                     + 添加景点
                 </button>
-            </fieldset>
+            </div>
 
             {/* 操作按钮 */}
-            <div style={{ marginTop: 30 }}>
+            <div className="action-buttons">
                 <button
                     onClick={save}
-                    style={{
-                        padding: '10px 30px',
-                        background: '#52c41a',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        cursor: 'pointer',
-                        fontSize: 16
-                    }}
+                    className="save-btn"
                 >
                     保存
                 </button>
 
                 <button
                     onClick={submit}
-                    style={{
-                        marginLeft: 10,
-                        padding: '10px 30px',
-                        background: '#1890ff',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        cursor: 'pointer',
-                        fontSize: 16
-                    }}
+                    className="submit-btn"
                 >
                     提交审核
                 </button>
@@ -476,6 +383,7 @@ const EditView = ({ form, onChange, save, submit, hotelId, onAddImage, onRemoveI
         </div>
     );
 };
+
 /* ========== 图片压缩辅助函数 ========== */
 const compressImage = (file, maxWidth = 800, quality = 0.7) => {
     return new Promise((resolve) => {
@@ -508,9 +416,9 @@ const compressImage = (file, maxWidth = 800, quality = 0.7) => {
         reader.readAsDataURL(file);
     });
 };
+
 /* ========== 主组件 ========== */
 export default function MerchantHome() {
-
     console.log('MerchantHome render');
     const token = sessionStorage.getItem('token');
 
@@ -762,7 +670,7 @@ export default function MerchantHome() {
 
     /* ========== 渲染 ========== */
     return (
-        <div>
+        <div className="merchant-container">
             <Navbar
                 tab={tab}
                 setTab={setTab}
